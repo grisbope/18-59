@@ -31,6 +31,7 @@ export async function POST(req: Request) {
       buildingId,
       profile,
       visionAnalysis,
+      customBuilding: body.customBuilding,
     });
     return NextResponse.json({
       plan,

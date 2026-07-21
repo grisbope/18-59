@@ -11,9 +11,20 @@ const colors: Record<RiskLevel, string> = {
   bajo: "#2F6B4F",
 };
 
-function FitBounds({ buildings }: { buildings: Building[] }) {
+function FitBounds({
+  buildings,
+  selectedId,
+}: {
+  buildings: Building[];
+  selectedId?: string;
+}) {
   const map = useMap();
   useEffect(() => {
+    const selected = buildings.find((b) => b.id === selectedId);
+    if (selected) {
+      map.flyTo([selected.lat, selected.lng], 16, { duration: 0.6 });
+      return;
+    }
     if (!buildings.length) return;
     const lats = buildings.map((b) => b.lat);
     const lngs = buildings.map((b) => b.lng);
@@ -24,7 +35,7 @@ function FitBounds({ buildings }: { buildings: Building[] }) {
       ],
       { padding: [20, 20] }
     );
-  }, [buildings, map]);
+  }, [buildings, map, selectedId]);
   return null;
 }
 
@@ -49,7 +60,7 @@ export function MapPickerLeaflet({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <FitBounds buildings={buildings} />
+      <FitBounds buildings={buildings} selectedId={selectedId} />
       {buildings.map((b) => (
         <CircleMarker
           key={b.id}
@@ -58,13 +69,15 @@ export function MapPickerLeaflet({
           pathOptions={{
             color: "#1A1A1A",
             weight: selectedId === b.id ? 2 : 1,
-            fillColor: colors[b.riskLevel],
+            fillColor: colors[b.riskLevel] || colors.medio,
             fillOpacity: 0.85,
           }}
           eventHandlers={{ click: () => onSelect(b) }}
         >
           <Popup>
             <strong>{b.name}</strong>
+            <br />
+            {b.address}
             <br />
             Riesgo {b.riskLevel}
           </Popup>

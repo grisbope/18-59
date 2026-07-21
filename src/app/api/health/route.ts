@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { hasOpenAI } from "@/lib/openai";
 import { hasSupabase } from "@/lib/supabase";
+import { getGoogleMapsApiKey } from "@/lib/geo";
 
 export const runtime = "nodejs";
 
@@ -10,6 +11,7 @@ export async function GET() {
     app: "18:59",
     openai: hasOpenAI(),
     supabase: hasSupabase(),
+    googleMaps: Boolean(getGoogleMapsApiKey()),
     time: new Date().toISOString(),
   });
 }

@@ -112,6 +112,50 @@ export function getBuilding(id: string): Building | undefined {
   return buildings.find((b) => b.id === id);
 }
 
+function isBuildingLike(v: unknown): v is Building {
+  if (!v || typeof v !== "object") return false;
+  const b = v as Record<string, unknown>;
+  return (
+    typeof b.id === "string" &&
+    typeof b.name === "string" &&
+    typeof b.address === "string" &&
+    typeof b.sectorId === "string" &&
+    typeof b.sectorName === "string" &&
+    typeof b.lat === "number" &&
+    typeof b.lng === "number" &&
+    typeof b.riskLevel === "string" &&
+    Array.isArray(b.vulnerabilities)
+  );
+}
+
+export function resolveBuilding(
+  buildingId: string,
+  customBuilding?: unknown
+): Building | undefined {
+  if (customBuilding && isBuildingLike(customBuilding)) {
+    const base = getBuilding(customBuilding.id);
+    if (base) return base;
+    // Ubicación real: completar campos faltantes desde el perfil más cercano
+    const near =
+      buildings.find((b) => b.sectorId === customBuilding.sectorId) ||
+      buildings[0];
+    return {
+      ...near,
+      ...customBuilding,
+      vulnerabilities:
+        customBuilding.vulnerabilities?.length > 0
+          ? customBuilding.vulnerabilities.map(String)
+          : near.vulnerabilities,
+      riskLevel: (["alto", "medio", "bajo"].includes(
+        String(customBuilding.riskLevel)
+      )
+        ? customBuilding.riskLevel
+        : near.riskLevel) as Building["riskLevel"],
+    };
+  }
+  return getBuilding(buildingId);
+}
+
 export async function getCommunityStats(): Promise<SectorStat[]> {
   const admin = getSupabaseAdmin();
   if (admin) {
@@ -297,8 +341,9 @@ export async function runResilienceAgent(input: {
   buildingId: string;
   profile: FamilyProfile;
   visionAnalysis?: string;
+  customBuilding?: unknown;
 }): Promise<FamilyPlan> {
-  const building = getBuilding(input.buildingId);
+  const building = resolveBuilding(input.buildingId, input.customBuilding);
   if (!building) throw new Error("Edificio no encontrado");
 
   const query = [

@@ -22,7 +22,7 @@ const buildings = buildingsData as Building[];
 
 const steps = [
   "Comunidad",
-  "Edificio",
+  "Ubicación",
   "Hogar",
   "Fotos",
   "Plan de acción",
@@ -92,6 +92,9 @@ export default function PlanPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           buildingId: selected.id,
+          customBuilding: selected.id.startsWith("custom-")
+            ? selected
+            : undefined,
           householdSize,
           housingType,
           hasElderly,
@@ -210,10 +213,18 @@ export default function PlanPage() {
 
       <section aria-labelledby="step-map" className="mb-10">
         <h2 id="step-map" className="mb-4 text-lg font-bold">
-          2. Tu edificio
+          2. Dónde vives
         </h2>
+        <p className="mb-3 text-sm text-[var(--color-muted)]">
+          Busca tu calle o dirección en Portoviejo. También puedes elegir una
+          referencia del mapa.
+        </p>
         <MapPicker
-          buildings={buildings}
+          buildings={
+            selected && selected.id.startsWith("custom-")
+              ? [...buildings, selected]
+              : buildings
+          }
           selectedId={selected?.id}
           onSelect={(b) => {
             setSelected(b);
