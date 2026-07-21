@@ -35,6 +35,7 @@ const checklist = [
   "Uso obligatorio de herramientas OpenAI documentado",
   "Privacidad: solo agregados por sector; fotos/ubicación no individuales en tablero",
   "Citación de fuentes en decisiones de seguridad",
+  "Auth Supabase: registro (auto-confirm Admin API) + login + cuenta demo jurado",
 ];
 
 export default function JuradoPage() {
@@ -50,6 +51,39 @@ export default function JuradoPage() {
         Transparencia técnica de <strong>18:59</strong> — PWA de planes de
         resiliencia familiar desde Portoviejo.
       </p>
+
+      <section className="mt-8 rounded-md border border-[var(--color-terracotta)] bg-[var(--color-paper)] p-5">
+        <h2 className="font-[family-name:var(--font-display)] text-xl">
+          Guion demo (≈3 minutos)
+        </h2>
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-[var(--color-ink-soft)]">
+          <li>
+            Abre{" "}
+            <Link href="/auth?next=/plan" className="font-semibold text-[var(--color-terracotta)] underline">
+              /auth
+            </Link>{" "}
+            → <strong>Entrar como demo (jurado)</strong>.
+          </li>
+          <li>
+            En{" "}
+            <Link href="/plan" className="font-semibold underline">
+              /plan
+            </Link>
+            : selecciona <strong>Sucre 214</strong> o <strong>Olmedo 88</strong> →
+            revisa gemelo digital.
+          </li>
+          <li>Genera plan (marca adultos mayores/niños) → escucha / descarga.</li>
+          <li>
+            <strong>Compartir con comunidad</strong> → el % del sector sube en el
+            tablero (métrica del pitch).
+          </li>
+          <li>Opcional: foto de fachada (Vision) · DevTools Offline → plan cacheado.</li>
+        </ol>
+        <p className="mt-3 text-xs text-[var(--color-muted)]">
+          Auth auditado con Secret Key: signup sin confirmación de correo (Admin
+          API), login password, cuenta demo confirmada.
+        </p>
+      </section>
 
       <section className="mt-10" aria-labelledby="openai-title">
         <h2 id="openai-title" className="font-[family-name:var(--font-display)] text-2xl">
@@ -78,7 +112,7 @@ export default function JuradoPage() {
                 ▼                          ▼
 ┌──────────────────────────┐   ┌──────────────────────────┐
 │ Agente orquestador       │   │ Supabase                 │
-│ OpenAI Agents pattern    │   │ Auth · Postgres · Storage│
+│ OpenAI Agents pattern    │   │ Auth · Storage · (SQL)   │
 │ edificio→RAG→plan→board  │   │ agregados por sector     │
 └───────────────┬──────────┘   └──────────────────────────┘
                 ▼
@@ -86,7 +120,8 @@ export default function JuradoPage() {
 │ RAG + vector/embeddings  │
 │ Corpus Portoviejo+SNGR   │
 └──────────────────────────┘
-Hosting: Vercel · Offline: Cache API + localStorage del plan`}
+Hosting: VPS EasyPanel/Traefik · Offline: Cache API + localStorage
+Auth: register (Admin autoconfirm) · login · demo@18-59.grisbope.com`}
         </pre>
       </section>
 
@@ -95,16 +130,18 @@ Hosting: Vercel · Offline: Cache API + localStorage del plan`}
           Flujo de usuario
         </h2>
         <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-[var(--color-ink-soft)]">
-          <li>Landing / instalar PWA → CTA «Generar mi plan».</li>
+          <li>Landing / instalar PWA → CTA «Generar mi plan» o Auth demo.</li>
           <li>Mapa: seleccionar bloque → ver gemelo digital y nivel de riesgo.</li>
           <li>Perfil familiar (tamaño, vulnerabilidad, amenaza).</li>
           <li>Agente genera plan con RAG + GPT; citas de fuentes.</li>
           <li>Opcional: Vision de fachada + TTS.</li>
-          <li>Descargar / cachear offline / compartir con comunidad.</li>
+          <li>Descargar / cachear offline / compartir con comunidad (Auth opcional).</li>
           <li>Tablero: % de hogares con plan documentado se actualiza (métrica del pitch).</li>
         </ol>
         <p className="mt-3 text-sm">
           Demo: <Link href="/plan" className="font-semibold text-[var(--color-terracotta)] underline">/plan</Link>
+          {" · "}
+          <Link href="/auth" className="font-semibold text-[var(--color-terracotta)] underline">/auth</Link>
         </p>
       </section>
 

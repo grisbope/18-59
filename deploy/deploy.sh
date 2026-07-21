@@ -31,7 +31,8 @@ if [ -f "$APP_DIR/.env.production" ]; then
 fi
 
 echo "==> docker build $IMAGE"
-docker build -t "$IMAGE" .
+# Invalidar caché de código fuente cuando hay cambios
+docker build --build-arg BUILD_DATE="$(date -u +%Y%m%d%H%M%S)" -t "$IMAGE" .
 
 docker network inspect easypanel >/dev/null 2>&1 || \
   docker network create --driver overlay --attachable easypanel

@@ -170,6 +170,8 @@ bash deploy/deploy.sh
 
 Variables opcionales en `/opt/apps/18-59/.env.production` (`OPENAI_API_KEY`, Supabase, etc.).
 
+**Supabase (vinculado):** proyecto `xkwqodbhbdjkzvensfqk`. El tablero comunitario usa Storage (`bucket app1859`) con las claves `sb_publishable_` / `sb_secret_`. Auth email ya responde. Para activar también tablas Postgres + Realtime, ejecuta `supabase/schema.sql` en el SQL Editor del dashboard.
+
 > Opcional (GitHub Actions): el workflow `.github/workflows/deploy.yml` está listo; hay que configurar en el repo los secrets `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (y `VPS_PORT` si aplica) para deploy inmediato por SSH además del auto-pull.
 
 ---

@@ -25,6 +25,8 @@ export interface Building {
   vulnerabilities: string[];
   safeMeetingPoint: string;
   evacuationNotes: string;
+  occupancyProfile?: string;
+  demoNarrative?: string;
 }
 
 export interface FamilyProfile {

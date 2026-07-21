@@ -41,12 +41,22 @@ export function Hero() {
             <CtaGeneratePlan />
             <InstallPWAButton />
             <Link
+              href="/auth?next=/plan"
+              className="inline-flex h-12 items-center px-3 text-sm font-semibold text-[var(--color-ink)] underline-offset-4 hover:underline"
+            >
+              Entrar / Demo
+            </Link>
+            <Link
               href="/jurado"
               className="inline-flex h-12 items-center px-3 text-sm font-semibold text-[var(--color-ink)] underline-offset-4 hover:underline"
             >
               Para el jurado
             </Link>
           </div>
+          <p className="mt-4 text-xs text-[var(--color-muted)]">
+            Ruta demo (~3 min): Jurado → Entrar como demo → Generar plan (Sucre 214) →
+            Compartir → ver % en comunidad.
+          </p>
         </div>
         <div className="flex justify-center md:justify-end">
           <StoppedClock className="h-64 w-64 md:h-80 md:w-80" />

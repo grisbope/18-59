@@ -137,7 +137,8 @@ export async function getCommunityStats(): Promise<SectorStat[]> {
 
 export async function registerSharedPlan(
   sectorId: string,
-  plan?: FamilyPlan | null
+  plan?: FamilyPlan | null,
+  userId?: string | null
 ): Promise<SectorStat[]> {
   const admin = getSupabaseAdmin();
   if (admin) {
@@ -152,6 +153,7 @@ export async function registerSharedPlan(
         hazardType: plan.hazardType,
         generatedAt: plan.generatedAt,
         shared: true,
+        userId: userId || null,
       };
       await admin.storage
         .from(STORAGE_BUCKET)

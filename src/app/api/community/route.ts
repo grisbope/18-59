@@ -26,7 +26,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "sectorId requerido" }, { status: 400 });
   }
   const plan = (body.plan as FamilyPlan | undefined) ?? null;
-  const sectors = await registerSharedPlan(sectorId, plan);
+  const userId = body.userId ? String(body.userId) : null;
+  const sectors = await registerSharedPlan(sectorId, plan, userId);
   const totalH = sectors.reduce((a, s) => a + s.totalHouseholds, 0);
   const withP = sectors.reduce((a, s) => a + s.householdsWithPlan, 0);
   return NextResponse.json({

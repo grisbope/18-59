@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-function supabaseUrl(): string | undefined {
+export function supabaseUrl(): string | undefined {
   return process.env.NEXT_PUBLIC_SUPABASE_URL || undefined;
 }
 

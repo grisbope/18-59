@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import buildingsData from "@/data/buildings.json";
 import type { Building, FamilyPlan, HazardType } from "@/lib/utils";
 import { MapPicker } from "@/components/MapPicker";
@@ -9,13 +10,26 @@ import { ActionPlanViewer } from "@/components/ActionPlanViewer";
 import { FacadeVisionAnalyzer } from "@/components/FacadeVisionAnalyzer";
 import { CommunityDashboard } from "@/components/CommunityDashboard";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/components/AuthProvider";
 import { savePlanLocal } from "@/lib/offline";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const buildings = buildingsData as Building[];
 
+const steps = [
+  "Edificio",
+  "Gemelo",
+  "Perfil",
+  "Plan vivo",
+  "Comunidad",
+];
+
 export default function PlanPage() {
-  const [selected, setSelected] = useState<Building | undefined>(buildings[0]);
+  const { user } = useAuth();
+  const [selected, setSelected] = useState<Building | undefined>(
+    buildings.find((b) => b.id === "b-001") ?? buildings[0]
+  );
   const [householdSize, setHouseholdSize] = useState(4);
   const [housingType, setHousingType] = useState("departamento");
   const [hasElderly, setHasElderly] = useState(true);
@@ -25,15 +39,18 @@ export default function PlanPage() {
   const [plan, setPlan] = useState<FamilyPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [shared, setShared] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dashKey, setDashKey] = useState(0);
 
   const canGenerate = useMemo(() => Boolean(selected), [selected]);
+  const activeStep = plan ? (shared ? 4 : 3) : selected ? 2 : 0;
 
   async function generate() {
     if (!selected) return;
     setLoading(true);
     setError(null);
+    setShared(false);
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
@@ -53,6 +70,9 @@ export default function PlanPage() {
       const p = data.plan as FamilyPlan;
       setPlan(p);
       savePlanLocal(p);
+      requestAnimationFrame(() => {
+        document.getElementById("step-plan")?.scrollIntoView({ behavior: "smooth" });
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo generar el plan");
     } finally {
@@ -67,15 +87,24 @@ export default function PlanPage() {
       await fetch("/api/community", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sectorId: plan.sectorId, plan }),
+        body: JSON.stringify({
+          sectorId: plan.sectorId,
+          plan,
+          userId: user?.id ?? null,
+        }),
       });
+      setShared(true);
       setDashKey((k) => k + 1);
       if (navigator.share) {
-        await navigator.share({
-          title: "Plan 18:59",
-          text: `Plan de resiliencia familiar — ${plan.buildingName}. Punto de encuentro: ${plan.meetingPoint}`,
-          url: window.location.origin + "/comunidad",
-        });
+        try {
+          await navigator.share({
+            title: "Plan 18:59",
+            text: `Plan de resiliencia familiar — ${plan.buildingName}. Punto de encuentro: ${plan.meetingPoint}`,
+            url: window.location.origin + "/comunidad",
+          });
+        } catch {
+          /* usuario canceló share nativo */
+        }
       }
     } finally {
       setSharing(false);
@@ -84,7 +113,7 @@ export default function PlanPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
-      <header className="mb-8">
+      <header className="mb-6">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-terracotta)]">
           Flujo del agente 18:59
         </p>
@@ -92,10 +121,45 @@ export default function PlanPage() {
           Generar mi plan
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">
-          Selecciona tu edificio → recupera informe de riesgo → genera plan vivo →
-          descarga / escucha / comparte. El plan queda cacheado para modo offline.
+          Selecciona tu edificio → gemelo digital → plan vivo → comparte. El plan
+          queda cacheado offline. Tip jurado: empieza por{" "}
+          <strong>Sucre 214</strong> o <strong>Olmedo 88</strong>.
         </p>
       </header>
+
+      <ol className="mb-8 flex flex-wrap gap-2" aria-label="Progreso del flujo">
+        {steps.map((label, i) => (
+          <li
+            key={label}
+            className={cn(
+              "rounded-md border px-3 py-1.5 text-xs font-semibold",
+              i <= activeStep
+                ? "border-[var(--color-terracotta)] bg-[var(--color-paper)] text-[var(--color-ink)]"
+                : "border-[var(--color-border)] text-[var(--color-muted)]"
+            )}
+          >
+            {i + 1}. {label}
+          </li>
+        ))}
+      </ol>
+
+      {!user && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-paper)] p-4 text-sm">
+          <p className="text-[var(--color-ink-soft)]">
+            Puedes generar el plan sin cuenta. Para asociarlo a tu hogar y
+            demostrar Auth ante el jurado, entra o usa la cuenta demo.
+          </p>
+          <Button asChild size="sm" variant="secondary">
+            <Link href="/auth?next=/plan">Entrar / Demo</Link>
+          </Button>
+        </div>
+      )}
+
+      {user && (
+        <p className="mb-6 text-sm text-[var(--color-resilience)]">
+          Sesión: <strong>{user.fullName || user.email}</strong>
+        </p>
+      )}
 
       <section aria-labelledby="step-map" className="mb-10">
         <h2 id="step-map" className="mb-4 text-lg font-bold">
@@ -104,7 +168,11 @@ export default function PlanPage() {
         <MapPicker
           buildings={buildings}
           selectedId={selected?.id}
-          onSelect={setSelected}
+          onSelect={(b) => {
+            setSelected(b);
+            setPlan(null);
+            setShared(false);
+          }}
         />
       </section>
 
@@ -211,6 +279,12 @@ export default function PlanPage() {
           <h2 id="step-plan" className="text-lg font-bold">
             4. Tu plan vivo
           </h2>
+          {shared && (
+            <p className="flex items-center gap-2 rounded-md border border-[var(--color-resilience)] bg-[var(--color-paper)] px-3 py-2 text-sm text-[var(--color-resilience)]">
+              <Check className="h-4 w-4" aria-hidden /> Plan compartido — el tablero
+              del sector se actualizó.
+            </p>
+          )}
           <ActionPlanViewer plan={plan} onShare={() => void share()} sharing={sharing} />
           <FacadeVisionAnalyzer />
           <div>

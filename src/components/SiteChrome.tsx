@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { TermsModal } from "@/components/TermsModal";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/components/AuthProvider";
 
 const links = [
   { href: "/#problema", label: "Problema" },
@@ -15,14 +16,22 @@ const links = [
 
 export function SiteHeader() {
   const [termsOpen, setTermsOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { user, logout, loading } = useAuth();
 
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <Link href="/" className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
+        <Link
+          href="/"
+          className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]"
+        >
           18:59
         </Link>
-        <nav className="hidden items-center gap-5 text-sm font-medium md:flex" aria-label="Principal">
+        <nav
+          className="hidden items-center gap-5 text-sm font-medium md:flex"
+          aria-label="Principal"
+        >
           {links.map((l) => (
             <Link
               key={l.href}
@@ -35,14 +44,73 @@ export function SiteHeader() {
           <Button variant="ghost" size="sm" onClick={() => setTermsOpen(true)}>
             Términos
           </Button>
+          {!loading &&
+            (user ? (
+              <div className="flex items-center gap-2">
+                <span className="max-w-[10rem] truncate text-xs text-[var(--color-muted)]">
+                  {user.fullName || user.email}
+                </span>
+                <Button variant="outline" size="sm" onClick={logout}>
+                  Salir
+                </Button>
+              </div>
+            ) : (
+              <Button asChild variant="secondary" size="sm">
+                <Link href="/auth">Entrar</Link>
+              </Button>
+            ))}
         </nav>
-        <Link
-          href="/plan"
-          className="rounded-md bg-[var(--color-terracotta)] px-3 py-2 text-sm font-semibold text-white md:hidden"
-        >
-          Generar plan
-        </Link>
+        <div className="flex items-center gap-2 md:hidden">
+          <Link
+            href="/plan"
+            className="rounded-md bg-[var(--color-terracotta)] px-3 py-2 text-sm font-semibold text-white"
+          >
+            Generar plan
+          </Link>
+          <button
+            type="button"
+            className="rounded-md border border-[var(--color-border)] px-3 py-2 text-sm font-semibold"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav"
+            onClick={() => setMenuOpen((v) => !v)}
+          >
+            Menú
+          </button>
+        </div>
       </div>
+      {menuOpen && (
+        <nav
+          id="mobile-nav"
+          className="border-t border-[var(--color-border)] bg-white px-4 py-3 md:hidden"
+          aria-label="Móvil"
+        >
+          <ul className="space-y-2 text-sm font-medium">
+            {links.map((l) => (
+              <li key={l.href}>
+                <Link
+                  href={l.href}
+                  className="block py-1"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+            <li>
+              <Link href="/auth" onClick={() => setMenuOpen(false)}>
+                {user ? "Mi cuenta" : "Entrar / Registrarse"}
+              </Link>
+            </li>
+            {user && (
+              <li>
+                <button type="button" onClick={logout}>
+                  Salir
+                </button>
+              </li>
+            )}
+          </ul>
+        </nav>
+      )}
       <TermsModal open={termsOpen} onOpenChange={setTermsOpen} />
     </header>
   );
@@ -79,6 +147,9 @@ export function SiteFooter() {
           </a>
           <Link href="/jurado" className="underline-offset-4 hover:underline">
             Para el jurado
+          </Link>
+          <Link href="/auth" className="underline-offset-4 hover:underline">
+            Auth
           </Link>
           <button
             type="button"

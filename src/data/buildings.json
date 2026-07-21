@@ -13,6 +13,8 @@
     "units": 16,
     "yearBuilt": 1988,
     "post16aReportId": "INF-POV-2017-Sucre-214",
+    "occupancyProfile": "Familias mixtas; varios adultos mayores en pisos 3–4",
+    "demoNarrative": "Caso piloto del pitch: daño residual documentado post-16A, sin refuerzo completo. Ideal para mostrar gemelo digital + plan vivo.",
     "vulnerabilities": [
       "Columnas con daño residual documentado post-16A",
       "Irregularidad en planta (esquina)",
@@ -35,6 +37,8 @@
     "units": 9,
     "yearBuilt": 1975,
     "post16aReportId": "INF-POV-2017-Morales-09",
+    "occupancyProfile": "Comercio en planta baja + viviendas",
+    "demoNarrative": "Patrón de mampostería no confinada típico del casco antiguo — útil para Vision de fachada.",
     "vulnerabilities": [
       "Mampostería no confinada en muros de fachada",
       "Grietas diagonales residuales en entrepiso 2",
@@ -57,6 +61,8 @@
     "units": 20,
     "yearBuilt": 2019,
     "post16aReportId": "INF-POV-2020-Memorial-01",
+    "occupancyProfile": "Reocupación post-reconstrucción; punto simbólico del reloj 18:58",
+    "demoNarrative": "Contraste post-norma junto al monumento: riesgo residual del entorno histórico.",
     "vulnerabilities": [
       "Edificación post-norma; riesgo residual por entorno de escombros históricos",
       "Accesos congestionales en hora pico"
@@ -78,6 +84,8 @@
     "units": 8,
     "yearBuilt": 1995,
     "post16aReportId": "INF-POV-2018-Picoaza-12",
+    "occupancyProfile": "Barrio periférico; tanques elevados frecuentes",
+    "demoNarrative": "Muestra capa comunitaria fuera del centro: mismo flujo, otro sector en el tablero.",
     "vulnerabilities": [
       "Suelo blando local; amplificación sísmica moderada",
       "Tanques elevados sin anclaje"
@@ -99,6 +107,8 @@
     "units": 24,
     "yearBuilt": 2021,
     "post16aReportId": "INF-POV-2022-AB-C",
+    "occupancyProfile": "Edificio reciente; familias con niños",
+    "demoNarrative": "Riesgo bajo no elimina el plan: demuestra que 18:59 no es solo para edificios críticos.",
     "vulnerabilities": [
       "Diseño post-norma; vigilancia de juntas de dilatación",
       "Rutas de evacuación dependen de iluminación de emergencia"
@@ -120,6 +130,8 @@
     "units": 6,
     "yearBuilt": 2005,
     "post16aReportId": "INF-POV-2019-Florida-04",
+    "occupancyProfile": "Ampliaciones verticales; exposición a cauce intermitente",
+    "demoNarrative": "Caso multi-amenaza: sismo + inundación (ODS 13). Cambia la amenaza en el perfil familiar.",
     "vulnerabilities": [
       "Ampliaciones verticales sin ingeniería",
       "Proximidad a cauce intermitente (inundación)",
@@ -142,6 +154,8 @@
     "units": 12,
     "yearBuilt": 1968,
     "post16aReportId": "INF-POV-2017-Rocafuerte-Chile",
+    "occupancyProfile": "Planta blanda comercial + vivienda superior",
+    "demoNarrative": "Tipología de planta blanda — patrón clásico de colapso parcial en 2016.",
     "vulnerabilities": [
       "Planta baja comercial abierta (planta blanda)",
       "Daño documentado en 2016 con reparación parcial",
@@ -164,11 +178,60 @@
     "units": 16,
     "yearBuilt": 2010,
     "post16aReportId": "INF-POV-2018-SanPablo",
+    "occupancyProfile": "Estacionamiento en planta baja",
+    "demoNarrative": "Reparaciones post-16A incompletas — muestra citas de informe en el plan.",
     "vulnerabilities": [
       "Reparaciones post-16A sin certificación completa visible",
       "Estacionamiento en planta baja (posible planta blanda)"
     ],
     "safeMeetingPoint": "Parque lineal vía Manta",
     "evacuationNotes": "Evacuar al parque lineal; verificar gas y electricidad antes de reingresar."
+  },
+  {
+    "id": "b-009",
+    "name": "Manzana Olmedo 88 (piloto)",
+    "address": "Olmedo entre Chile y Ricaurte — manzana priorizada",
+    "sectorId": "centro-historico",
+    "sectorName": "Centro Histórico",
+    "lat": -1.0544,
+    "lng": -80.4535,
+    "riskLevel": "alto",
+    "buildingType": "multifamiliar_hormigon",
+    "floors": 3,
+    "units": 10,
+    "yearBuilt": 1982,
+    "post16aReportId": "INF-POV-2017-Olmedo-88",
+    "occupancyProfile": "Alta densidad; una persona con discapacidad reportada en demo",
+    "demoNarrative": "Bloque del pitch comunitario: al compartir, el % del Centro Histórico sube en vivo.",
+    "vulnerabilities": [
+      "Dentro de las 88 manzanas devastadas del centro histórico",
+      "Elementos no estructurales sueltos en balcones",
+      "Señalética de evacuación incompleta"
+    ],
+    "safeMeetingPoint": "Plaza Memorial San Gregorio — ingreso sur",
+    "evacuationNotes": "Priorizar asistencia a movilidad reducida; ruta directa a Plaza Memorial por Olmedo."
+  },
+  {
+    "id": "b-010",
+    "name": "Escuela comunitaria Florida",
+    "address": "Barrio Florida, frente a patio alto",
+    "sectorId": "florida",
+    "sectorName": "Florida",
+    "lat": -1.0710,
+    "lng": -80.4418,
+    "riskLevel": "medio",
+    "buildingType": "equipamiento_publico",
+    "floors": 2,
+    "units": 1,
+    "yearBuilt": 2008,
+    "post16aReportId": "INF-POV-2019-Florida-Escuela",
+    "occupancyProfile": "Punto de encuentro oficial del sector Florida",
+    "demoNarrative": "No es vivienda: muestra rutas/puntos de encuentro descargables del plan familiar.",
+    "vulnerabilities": [
+      "Uso intensivo como albergue espontáneo post-evento",
+      "Acceso peatonal estrecho en crecida"
+    ],
+    "safeMeetingPoint": "Patio alto de la escuela",
+    "evacuationNotes": "Zona de reunión comunitaria; coordinar con líder barrial."
   }
 ]

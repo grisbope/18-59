@@ -61,6 +61,16 @@ export function BuildingTwinCard({ building }: { building: Building }) {
           {building.safeMeetingPoint}
         </p>
         <p className="mt-1 text-sm text-[var(--color-muted)]">{building.evacuationNotes}</p>
+        {building.occupancyProfile && (
+          <p className="mt-2 text-sm text-[var(--color-ink-soft)]">
+            <span className="font-semibold">Ocupación:</span> {building.occupancyProfile}
+          </p>
+        )}
+        {building.demoNarrative && (
+          <p className="mt-2 border-t border-[var(--color-border)] pt-2 text-xs italic text-[var(--color-muted)]">
+            Demo: {building.demoNarrative}
+          </p>
+        )}
       </div>
     </Card>
   );
