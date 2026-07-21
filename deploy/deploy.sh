@@ -96,6 +96,8 @@ export SUPABASE_SECRET_KEY="${SUPABASE_SECRET_KEY:-}"
 export SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-${SUPABASE_SECRET_KEY:-}}"
 
 docker stack deploy -c deploy/docker-compose.yml "$STACK_NAME"
+# Swarm no siempre reemplaza tareas si el tag :latest no cambia de nombre
+docker service update --force --image "$IMAGE" "${STACK_NAME}_web" >/dev/null
 
 echo "==> esperando réplica 1/1..."
 ok=0
