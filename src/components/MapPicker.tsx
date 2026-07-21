@@ -242,6 +242,7 @@ export function MapPicker({
               <button
                 type="button"
                 role="option"
+                aria-selected={false}
                 disabled={resolvingId === h.id}
                 onClick={() => void pickHit(h)}
                 className="w-full rounded-md border border-[var(--color-border)] p-3 text-left hover:border-[var(--color-ink-soft)]"

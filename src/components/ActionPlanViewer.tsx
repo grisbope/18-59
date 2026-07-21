@@ -61,7 +61,6 @@ export function ActionPlanViewer({
       stopSpeech();
       window.speechSynthesis?.removeEventListener?.("voiceschanged", onVoices);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function speakWithWebSpeech(text: string) {
