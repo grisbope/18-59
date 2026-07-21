@@ -27,6 +27,13 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "18:59",
   },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "192x192" }],
+  },
   openGraph: {
     title: "18:59 — El minuto siguiente",
     description:
