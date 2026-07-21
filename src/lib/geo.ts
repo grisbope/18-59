@@ -61,16 +61,19 @@ export function buildingFromPlace(hit: PlaceHit): Building {
     lat: hit.lat,
     lng: hit.lng,
     riskLevel: near.riskLevel,
-    buildingType: near.buildingType,
-    floors: near.floors,
-    units: near.units,
-    yearBuilt: near.yearBuilt,
-    post16aReportId: near.post16aReportId,
-    vulnerabilities: [...near.vulnerabilities],
+    buildingType: "ubicacion-geocodificada",
+    floors: 0,
+    units: 0,
+    yearBuilt: 0,
+    post16aReportId: `zona-${near.sectorId}`,
+    vulnerabilities: [
+      `Patrones de zona (${near.sectorName}): ${near.vulnerabilities[0] || "revisar entorno"}`,
+      ...near.vulnerabilities.slice(1, 3),
+    ],
     safeMeetingPoint: near.safeMeetingPoint,
     evacuationNotes: near.evacuationNotes,
-    occupancyProfile: "Ubicación indicada por la familia (geocodificada).",
-    demoNarrative: `Riesgo estimado por cercanía al perfil de ${near.name} (${near.sectorName}). No sustituye evaluación técnica oficial.`,
+    occupancyProfile: undefined,
+    demoNarrative: undefined,
   };
 }
 
