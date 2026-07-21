@@ -155,7 +155,26 @@ npm run build
 npm start
 ```
 
-### Demo sugerida (pitch ~3 min)
+### Producción — VPS (`https://18-59.grisbope.com`)
+
+La app corre en el VPS EasyPanel (Docker Swarm + Traefik) en `18-59.grisbope.com`.
+
+**Deploy automático:** cada push a `main` se detecta en el servidor (cron cada 2 min → `deploy/auto-pull.sh` → `deploy/deploy.sh`). No hace falta entrar al VPS.
+
+Deploy manual en el servidor:
+
+```bash
+cd /opt/apps/18-59
+bash deploy/deploy.sh
+```
+
+Variables opcionales en `/opt/apps/18-59/.env.production` (`OPENAI_API_KEY`, Supabase, etc.).
+
+> Opcional (GitHub Actions): el workflow `.github/workflows/deploy.yml` está listo; hay que configurar en el repo los secrets `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (y `VPS_PORT` si aplica) para deploy inmediato por SSH además del auto-pull.
+
+---
+
+## Estructura de carpetas
 
 1. Landing → reloj 18:58 + tagline → **Generar mi plan**
 2. Mapa: seleccionar bloque de alto riesgo en centro histórico
