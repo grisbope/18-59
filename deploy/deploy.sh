@@ -78,7 +78,9 @@ if "  services:" in text:
     text = text.replace("  services:\n", "  services:\n" + service_block, 1)
 else:
     text += "\n  services:\n" + service_block
-p.write_text(text)
+# Traefik 3: nunca dejar middlewares: {} vacío en el archivo
+text = text.replace("  middlewares: {}\n", "")
+p.write_text(text.rstrip() + "\n")
 print("Traefik custom.yaml updated")
 PY
 fi
