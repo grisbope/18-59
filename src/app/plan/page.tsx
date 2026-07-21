@@ -67,7 +67,7 @@ export default function PlanPage() {
       await fetch("/api/community", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sectorId: plan.sectorId }),
+        body: JSON.stringify({ sectorId: plan.sectorId, plan }),
       });
       setDashKey((k) => k + 1);
       if (navigator.share) {

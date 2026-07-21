@@ -2,51 +2,105 @@ import buildingsData from "@/data/buildings.json";
 import type { Building, FamilyPlan, FamilyProfile, SectorStat } from "./utils";
 import { formatSources, retrieveRAG } from "./rag";
 import { getOpenAI, hasOpenAI } from "./openai";
-import { getSupabaseAdmin } from "./supabase";
+import {
+  getSupabaseAdmin,
+  hasSupabase,
+  STATS_OBJECT,
+  STORAGE_BUCKET,
+} from "./supabase";
 
 const buildings = buildingsData as Building[];
 
-/** Store demo en memoria para tablero comunitario sin Supabase. */
-const demoStats: Record<string, SectorStat> = {
-  "centro-historico": {
+const seedStats: SectorStat[] = [
+  {
     sectorId: "centro-historico",
     sectorName: "Centro Histórico",
     totalHouseholds: 420,
     householdsWithPlan: 38,
     percent: 9,
   },
-  "san-gregorio": {
+  {
     sectorId: "san-gregorio",
     sectorName: "San Gregorio / Plaza Memorial",
     totalHouseholds: 180,
     householdsWithPlan: 22,
     percent: 12,
   },
-  picoaza: {
+  {
     sectorId: "picoaza",
     sectorName: "Picoazá",
     totalHouseholds: 310,
     householdsWithPlan: 15,
     percent: 5,
   },
-  "andre-bello": {
+  {
     sectorId: "andre-bello",
     sectorName: "Andrés Bello",
     totalHouseholds: 250,
     householdsWithPlan: 19,
     percent: 8,
   },
-  florida: {
+  {
     sectorId: "florida",
     sectorName: "Florida",
     totalHouseholds: 200,
     householdsWithPlan: 11,
     percent: 6,
   },
-};
+];
+
+/** Fallback en memoria solo si Supabase no está configurado. */
+const demoStats: Record<string, SectorStat> = Object.fromEntries(
+  seedStats.map((s) => [s.sectorId, { ...s }])
+);
 
 function pct(withPlan: number, total: number) {
   return Math.round((withPlan / Math.max(total, 1)) * 100);
+}
+
+function normalizeStats(rows: SectorStat[]): SectorStat[] {
+  return rows.map((s) => ({
+    ...s,
+    percent: pct(s.householdsWithPlan, s.totalHouseholds),
+  }));
+}
+
+async function readStatsFromStorage(): Promise<SectorStat[] | null> {
+  const admin = getSupabaseAdmin();
+  if (!admin) return null;
+  const { data, error } = await admin.storage
+    .from(STORAGE_BUCKET)
+    .download(STATS_OBJECT);
+  if (error || !data) return null;
+  try {
+    const text = await data.text();
+    const parsed = JSON.parse(text) as SectorStat[];
+    if (!Array.isArray(parsed) || !parsed.length) return null;
+    return normalizeStats(parsed);
+  } catch {
+    return null;
+  }
+}
+
+async function writeStatsToStorage(stats: SectorStat[]): Promise<boolean> {
+  const admin = getSupabaseAdmin();
+  if (!admin) return false;
+  const body = JSON.stringify(normalizeStats(stats), null, 2);
+  const { error } = await admin.storage
+    .from(STORAGE_BUCKET)
+    .upload(STATS_OBJECT, body, {
+      contentType: "application/json",
+      upsert: true,
+    });
+  return !error;
+}
+
+async function ensureStorageSeed(): Promise<SectorStat[]> {
+  const existing = await readStatsFromStorage();
+  if (existing) return existing;
+  const seeded = normalizeStats(seedStats.map((s) => ({ ...s })));
+  await writeStatsToStorage(seeded);
+  return seeded;
 }
 
 export function listBuildings(): Building[] {
@@ -60,11 +114,12 @@ export function getBuilding(id: string): Building | undefined {
 export async function getCommunityStats(): Promise<SectorStat[]> {
   const admin = getSupabaseAdmin();
   if (admin) {
+    // 1) Postgres (si el schema SQL ya se aplicó)
     const { data, error } = await admin
       .from("community_sector_stats")
       .select("*")
       .order("sector_name");
-    if (!error && data) {
+    if (!error && data?.length) {
       return data.map((r) => ({
         sectorId: r.sector_id,
         sectorName: r.sector_name,
@@ -73,25 +128,85 @@ export async function getCommunityStats(): Promise<SectorStat[]> {
         percent: pct(r.households_with_plan, r.total_households),
       }));
     }
+    // 2) Storage (vinculación activa con claves sb_*)
+    const fromStorage = await ensureStorageSeed();
+    if (fromStorage.length) return fromStorage;
   }
-  return Object.values(demoStats).map((s) => ({
-    ...s,
-    percent: pct(s.householdsWithPlan, s.totalHouseholds),
-  }));
+  return normalizeStats(Object.values(demoStats).map((s) => ({ ...s })));
 }
 
-export async function registerSharedPlan(sectorId: string): Promise<SectorStat[]> {
+export async function registerSharedPlan(
+  sectorId: string,
+  plan?: FamilyPlan | null
+): Promise<SectorStat[]> {
   const admin = getSupabaseAdmin();
   if (admin) {
-    await admin.rpc("register_shared_plan", { p_sector_id: sectorId });
-    return getCommunityStats();
+    // Guardar plan agregado (sin PII de ubicación/foto) en Storage
+    if (plan) {
+      const safe = {
+        id: plan.id,
+        buildingId: plan.buildingId,
+        sectorId: plan.sectorId,
+        sectorName: plan.sectorName,
+        riskLevel: plan.riskLevel,
+        hazardType: plan.hazardType,
+        generatedAt: plan.generatedAt,
+        shared: true,
+      };
+      await admin.storage
+        .from(STORAGE_BUCKET)
+        .upload(`plans/${plan.id}.json`, JSON.stringify(safe, null, 2), {
+          contentType: "application/json",
+          upsert: true,
+        });
+    }
+
+    // Postgres RPC si existe
+    const { error: rpcError } = await admin.rpc("register_shared_plan", {
+      p_sector_id: sectorId,
+    });
+    if (!rpcError) {
+      return getCommunityStats();
+    }
+
+    // Storage: incrementar agregado por sector
+    const stats = await ensureStorageSeed();
+    const next = stats.map((s) => {
+      if (s.sectorId !== sectorId) return s;
+      const householdsWithPlan = Math.min(
+        s.householdsWithPlan + 1,
+        s.totalHouseholds
+      );
+      return {
+        ...s,
+        householdsWithPlan,
+        percent: pct(householdsWithPlan, s.totalHouseholds),
+      };
+    });
+    await writeStatsToStorage(next);
+    return next;
   }
+
   const s = demoStats[sectorId];
   if (s && s.householdsWithPlan < s.totalHouseholds) {
     s.householdsWithPlan += 1;
     s.percent = pct(s.householdsWithPlan, s.totalHouseholds);
   }
   return getCommunityStats();
+}
+
+export function supabaseLinkStatus() {
+  return {
+    configured: hasSupabase(),
+    url: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+    publishable: Boolean(
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    ),
+    secret: Boolean(
+      process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
+    ),
+  };
 }
 
 function buildFallbackPlan(
