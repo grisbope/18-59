@@ -69,15 +69,19 @@ export default function JuradoPage() {
             <Link href="/plan" className="font-semibold underline">
               /plan
             </Link>
-            : selecciona <strong>Sucre 214</strong> o <strong>Olmedo 88</strong> →
-            revisa gemelo digital.
+            : tablero comunitario → elige <strong>Sucre 214</strong> o{" "}
+            <strong>Olmedo 88</strong> → perfil del hogar → fotos (exterior +
+            interior).
           </li>
-          <li>Genera plan (marca adultos mayores/niños) → escucha / descarga.</li>
+          <li>
+            <strong>Generar plan de acción</strong> (Vision + GPT) → escucha /
+            descarga.
+          </li>
           <li>
             <strong>Compartir con comunidad</strong> → el % del sector sube en el
-            tablero (métrica del pitch).
+            tablero de arriba (métrica del pitch).
           </li>
-          <li>Opcional: foto de fachada (Vision) · DevTools Offline → plan cacheado.</li>
+          <li>DevTools Offline → plan cacheado.</li>
         </ol>
         <p className="mt-3 text-xs text-[var(--color-muted)]">
           Auth auditado con Secret Key: signup sin confirmación de correo (Admin
