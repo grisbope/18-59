@@ -1,0 +1,174 @@
+[
+  {
+    "id": "b-001",
+    "name": "Bloque multifamiliar Calle Sucre 214",
+    "address": "Calle Sucre 214 y Olmedo, Centro Histórico",
+    "sectorId": "centro-historico",
+    "sectorName": "Centro Histórico",
+    "lat": -1.0547,
+    "lng": -80.4545,
+    "riskLevel": "alto",
+    "buildingType": "multifamiliar_hormigon",
+    "floors": 4,
+    "units": 16,
+    "yearBuilt": 1988,
+    "post16aReportId": "INF-POV-2017-Sucre-214",
+    "vulnerabilities": [
+      "Columnas con daño residual documentado post-16A",
+      "Irregularidad en planta (esquina)",
+      "Sin refuerzo sísmico posterior al evento"
+    ],
+    "safeMeetingPoint": "Plaza Memorial San Gregorio — ingreso norte",
+    "evacuationNotes": "Evacuar por Sucre hacia Plaza Memorial; evitar cornisas de fachadas no reforzadas en Olmedo."
+  },
+  {
+    "id": "b-002",
+    "name": "Edificio Residencial Morales",
+    "address": "Av. Morales entre Rocafuerte y Bolívar",
+    "sectorId": "centro-historico",
+    "sectorName": "Centro Histórico",
+    "lat": -1.0552,
+    "lng": -80.4538,
+    "riskLevel": "alto",
+    "buildingType": "multifamiliar_mamposteria",
+    "floors": 3,
+    "units": 9,
+    "yearBuilt": 1975,
+    "post16aReportId": "INF-POV-2017-Morales-09",
+    "vulnerabilities": [
+      "Mampostería no confinada en muros de fachada",
+      "Grietas diagonales residuales en entrepiso 2",
+      "Escalera única sin salida alternativa"
+    ],
+    "safeMeetingPoint": "Parque Central — costado oeste",
+    "evacuationNotes": "Usar escalera hacia Morales; punto de encuentro en Parque Central. No usar ascensor si existiera."
+  },
+  {
+    "id": "b-003",
+    "name": "Conjunto Plaza Memorial",
+    "address": "Frente a Plaza Memorial San Gregorio",
+    "sectorId": "san-gregorio",
+    "sectorName": "San Gregorio / Plaza Memorial",
+    "lat": -1.0539,
+    "lng": -80.4552,
+    "riskLevel": "medio",
+    "buildingType": "multifamiliar_hormigon",
+    "floors": 5,
+    "units": 20,
+    "yearBuilt": 2019,
+    "post16aReportId": "INF-POV-2020-Memorial-01",
+    "vulnerabilities": [
+      "Edificación post-norma; riesgo residual por entorno de escombros históricos",
+      "Accesos congestionales en hora pico"
+    ],
+    "safeMeetingPoint": "Plaza Memorial San Gregorio — reloj 18:58",
+    "evacuationNotes": "Reunirse en el monumento del reloj; mantener distancia de fachadas del casco antiguo."
+  },
+  {
+    "id": "b-004",
+    "name": "Bloque Picoazá Norte",
+    "address": "Calle principal Picoazá, manzana 12",
+    "sectorId": "picoaza",
+    "sectorName": "Picoazá",
+    "lat": -1.0485,
+    "lng": -80.4620,
+    "riskLevel": "medio",
+    "buildingType": "vivienda_mixta",
+    "floors": 2,
+    "units": 8,
+    "yearBuilt": 1995,
+    "post16aReportId": "INF-POV-2018-Picoaza-12",
+    "vulnerabilities": [
+      "Suelo blando local; amplificación sísmica moderada",
+      "Tanques elevados sin anclaje"
+    ],
+    "safeMeetingPoint": "Cancha barrial Picoazá",
+    "evacuationNotes": "Evacuar a cancha barrial; evitar tendido eléctrico de la avenida."
+  },
+  {
+    "id": "b-005",
+    "name": "Torres Andrés Bello",
+    "address": "Ciudadela Andrés Bello, bloque C",
+    "sectorId": "andre-bello",
+    "sectorName": "Andrés Bello",
+    "lat": -1.0610,
+    "lng": -80.4480,
+    "riskLevel": "bajo",
+    "buildingType": "multifamiliar_hormigon",
+    "floors": 6,
+    "units": 24,
+    "yearBuilt": 2021,
+    "post16aReportId": "INF-POV-2022-AB-C",
+    "vulnerabilities": [
+      "Diseño post-norma; vigilancia de juntas de dilatación",
+      "Rutas de evacuación dependen de iluminación de emergencia"
+    ],
+    "safeMeetingPoint": "Área verde central Andrés Bello",
+    "evacuationNotes": "Usar escaleras de emergencia señalizadas; punto en área verde central."
+  },
+  {
+    "id": "b-006",
+    "name": "Viviendas Florida Este",
+    "address": "Barrio Florida, pasaje 4",
+    "sectorId": "florida",
+    "sectorName": "Florida",
+    "lat": -1.0705,
+    "lng": -80.4410,
+    "riskLevel": "alto",
+    "buildingType": "vivienda_informal",
+    "floors": 2,
+    "units": 6,
+    "yearBuilt": 2005,
+    "post16aReportId": "INF-POV-2019-Florida-04",
+    "vulnerabilities": [
+      "Ampliaciones verticales sin ingeniería",
+      "Proximidad a cauce intermitente (inundación)",
+      "Materiales livianos sin amarre"
+    ],
+    "safeMeetingPoint": "Escuela Florida — patio alto",
+    "evacuationNotes": "Ante sismo o crecida: subir a patio de la escuela; no cruzar el cauce."
+  },
+  {
+    "id": "b-007",
+    "name": "Edificio Comercio Rocafuerte",
+    "address": "Rocafuerte y Chile, Centro",
+    "sectorId": "centro-historico",
+    "sectorName": "Centro Histórico",
+    "lat": -1.0541,
+    "lng": -80.4540,
+    "riskLevel": "alto",
+    "buildingType": "mixto_comercio_vivienda",
+    "floors": 3,
+    "units": 12,
+    "yearBuilt": 1968,
+    "post16aReportId": "INF-POV-2017-Rocafuerte-Chile",
+    "vulnerabilities": [
+      "Planta baja comercial abierta (planta blanda)",
+      "Daño documentado en 2016 con reparación parcial",
+      "Voladizos y cornisas en fachada"
+    ],
+    "safeMeetingPoint": "Plaza Memorial San Gregorio",
+    "evacuationNotes": "Salir hacia Chile y continuar a Plaza Memorial; alejarse de voladizos."
+  },
+  {
+    "id": "b-008",
+    "name": "Conjunto San Pablo",
+    "address": "Vía Manta, ingreso San Pablo",
+    "sectorId": "andre-bello",
+    "sectorName": "Andrés Bello",
+    "lat": -1.0588,
+    "lng": -80.4505,
+    "riskLevel": "medio",
+    "buildingType": "multifamiliar_hormigon",
+    "floors": 4,
+    "units": 16,
+    "yearBuilt": 2010,
+    "post16aReportId": "INF-POV-2018-SanPablo",
+    "vulnerabilities": [
+      "Reparaciones post-16A sin certificación completa visible",
+      "Estacionamiento en planta baja (posible planta blanda)"
+    ],
+    "safeMeetingPoint": "Parque lineal vía Manta",
+    "evacuationNotes": "Evacuar al parque lineal; verificar gas y electricidad antes de reingresar."
+  }
+]
