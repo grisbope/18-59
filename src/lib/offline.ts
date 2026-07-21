@@ -85,3 +85,63 @@ export function downloadPlanMarkdown(plan: FamilyPlan) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+/** Descarga el plan en PDF (cliente). */
+export async function downloadPlanPdf(plan: FamilyPlan) {
+  const { jsPDF } = await import("jspdf");
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const margin = 16;
+  const maxW = 210 - margin * 2;
+  let y = 18;
+
+  const line = (text: string, size = 11, gap = 6) => {
+    doc.setFontSize(size);
+    const lines = doc.splitTextToSize(text, maxW) as string[];
+    for (const l of lines) {
+      if (y > 280) {
+        doc.addPage();
+        y = 18;
+      }
+      doc.text(l, margin, y);
+      y += gap;
+    }
+  };
+
+  doc.setFont("helvetica", "bold");
+  line("18:59 — Plan de resiliencia familiar", 16, 8);
+  doc.setFont("helvetica", "normal");
+  line(`${plan.buildingName}`, 13, 7);
+  line(`Sector: ${plan.sectorName} · Riesgo: ${plan.riskLevel} · Amenaza: ${plan.hazardType}`, 10, 6);
+  line(`Punto de encuentro: ${plan.meetingPoint}`, 10, 5);
+  line(`Ruta: ${plan.evacuationRoute}`, 10, 7);
+  line(plan.familySummary, 11, 7);
+
+  for (const section of [plan.before, plan.during, plan.after]) {
+    doc.setFont("helvetica", "bold");
+    line(section.title, 12, 6);
+    doc.setFont("helvetica", "normal");
+    section.items.forEach((item, i) => line(`${i + 1}. ${item}`, 10, 5));
+    y += 2;
+  }
+
+  if (plan.sources?.length) {
+    doc.setFont("helvetica", "bold");
+    line("Fuentes citadas", 12, 6);
+    doc.setFont("helvetica", "normal");
+    plan.sources.slice(0, 5).forEach((s) => {
+      line(`• ${s.title}: ${s.excerpt}`, 9, 4.5);
+    });
+  }
+
+  y += 4;
+  doc.setFontSize(8);
+  doc.setTextColor(100);
+  line(
+    `Generado ${plan.generatedAt}. No sustituye instrucciones oficiales de gestión de riesgos. 18-59.grisbope.com`,
+    8,
+    4
+  );
+
+  doc.save(`plan-1859-${plan.buildingId}.pdf`);
+}
+

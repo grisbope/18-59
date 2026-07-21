@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { RiskBadge } from "@/components/ui/RiskBadge";
-import { downloadPlanMarkdown } from "@/lib/offline";
+import { downloadPlanMarkdown, downloadPlanPdf } from "@/lib/offline";
 import { stripMarkdown } from "@/lib/text";
 import type { FamilyPlan } from "@/lib/utils";
 import { hazardLabel } from "@/lib/utils";
-import { Download, Share2, Volume2, VolumeX } from "lucide-react";
+import { Download, FileText, Share2, Volume2, VolumeX } from "lucide-react";
 
 function pickSpanishVoice(): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis?.getVoices?.() ?? [];
@@ -31,6 +31,7 @@ export function ActionPlanViewer({
   const [speaking, setSpeaking] = useState(false);
   const [ttsBusy, setTtsBusy] = useState(false);
   const [ttsError, setTtsError] = useState<string | null>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
 
@@ -255,10 +256,31 @@ export function ActionPlanViewer({
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => downloadPlanMarkdown(plan)}
+          disabled={pdfBusy}
+          onClick={() => {
+            void (async () => {
+              setPdfBusy(true);
+              try {
+                await downloadPlanPdf(plan);
+              } catch {
+                downloadPlanMarkdown(plan);
+              } finally {
+                setPdfBusy(false);
+              }
+            })();
+          }}
         >
           <Download className="h-4 w-4" />
-          Guardar
+          {pdfBusy ? "PDF…" : "Descargar PDF"}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => downloadPlanMarkdown(plan)}
+        >
+          <FileText className="h-4 w-4" />
+          Markdown
         </Button>
         {onShare && (
           <Button
