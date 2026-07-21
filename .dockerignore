@@ -1,0 +1,14 @@
+# Dependencias / build
+node_modules
+.next
+.git
+.gitignore
+*.md
+.env*
+!.env.example
+Dockerfile
+docker-compose*.yml
+.github
+scripts
+supabase
+eslint.config.mjs

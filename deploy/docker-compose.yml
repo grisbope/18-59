@@ -1,0 +1,40 @@
+services:
+  web:
+    image: app1859-web:latest
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_APP_URL: https://18-59.grisbope.com
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+    networks:
+      - easypanel
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      update_config:
+        parallelism: 1
+        order: start-first
+        failure_action: rollback
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=easypanel
+        - traefik.http.routers.app1859-http.rule=Host(`18-59.grisbope.com`)
+        - traefik.http.routers.app1859-http.entrypoints=http
+        - traefik.http.routers.app1859-http.middlewares=redirect-to-https@file
+        - traefik.http.routers.app1859-http.priority=100
+        - traefik.http.routers.app1859-https.rule=Host(`18-59.grisbope.com`)
+        - traefik.http.routers.app1859-https.entrypoints=https
+        - traefik.http.routers.app1859-https.tls=true
+        - traefik.http.routers.app1859-https.tls.certresolver=letsencrypt
+        - traefik.http.routers.app1859-https.priority=100
+        - traefik.http.services.app1859.loadbalancer.server.port=3000
+
+networks:
+  easypanel:
+    external: true
