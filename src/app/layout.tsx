@@ -18,9 +18,9 @@ const sans = Source_Sans_3({
 });
 
 export const metadata: Metadata = {
-  title: "18:59 — Planes de resiliencia familiar | Portoviejo",
+  title: "18:59 — Plan familiar ante sismos | Portoviejo",
   description:
-    "En 2016 el reloj se detuvo en 18:58. Nosotros construimos el minuto siguiente. PWA de planes de resiliencia familiar con IA, gemelo digital de edificio y capa comunitaria. ODS 11 y 13.",
+    "El plan de qué hacer antes, durante y después de un sismo — para tu familia y tu edificio en Portoviejo. Escúchalo, descárgalo en PDF y compártelo. ODS 11 y 13.",
   applicationName: "18:59",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "18:59 — El minuto siguiente",
     description:
-      "Generador de planes de resiliencia familiar desde Portoviejo. ODS 11 y 13.",
+      "Plan familiar Antes / Durante / Después de un sismo. Personalizado, con voz, PDF y capa comunitaria en Portoviejo.",
     locale: "es_EC",
     type: "website",
   },

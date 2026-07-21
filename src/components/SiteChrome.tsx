@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/components/AuthProvider";
 
 const links = [
-  { href: "/#problema", label: "Problema" },
+  { href: "/#utilidad", label: "Para qué sirve" },
   { href: "/#como-funciona", label: "Cómo funciona" },
   { href: "/plan", label: "Plan familiar" },
   { href: "/portoparques", label: "18:59 PortoParques" },

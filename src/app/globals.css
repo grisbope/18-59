@@ -3,8 +3,8 @@
 
 :root {
   --color-ink: #1a1a1a;
-  --color-ink-soft: #4a4a4a;
-  --color-muted: #6b6b6b;
+  --color-ink-soft: #3d3d3d;
+  --color-muted: #555555;
   --color-paper: #f7f4f1;
   --color-border: #e4e0db;
   --color-terracotta: #c45c3e;
@@ -78,19 +78,24 @@ body {
 }
 
 .hero-copy {
-  animation: hero-rise 0.7s ease-out both;
+  animation: hero-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.section-rise {
+  animation: hero-rise 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .building-twin,
 .action-plan,
 .community-dashboard {
-  animation: hero-rise 0.5s ease-out both;
+  animation: hero-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .clock-face.clock-enter,
   .clock-hand-minute,
   .hero-copy,
+  .section-rise,
   .building-twin,
   .action-plan,
   .community-dashboard {
