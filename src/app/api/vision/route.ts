@@ -10,6 +10,22 @@ export async function POST(req: Request) {
     if (!image || typeof image !== "string") {
       return NextResponse.json({ error: "Imagen requerida" }, { status: 400 });
     }
+    if (!image.startsWith("data:image/") && !image.startsWith("http")) {
+      return NextResponse.json(
+        { error: "Formato de imagen no válido" },
+        { status: 400 }
+      );
+    }
+    // Evitar payloads minúsculos que GPT-4o Vision rechaza con 500 opaco
+    if (image.startsWith("data:image/") && image.length < 2000) {
+      return NextResponse.json(
+        {
+          error:
+            "La imagen es demasiado pequeña o vacía. Sube una foto clara de la fachada.",
+        },
+        { status: 400 }
+      );
+    }
 
     const chunks = await retrieveRAG(
       "fachada grietas mampostería planta blanda voladizos Portoviejo post-16A",
