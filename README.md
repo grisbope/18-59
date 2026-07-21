@@ -109,7 +109,8 @@ Documentación para el jurado: ruta **`/jurado`**.
 - **PWA:** `manifest.webmanifest` + Service Worker Workbox (`@ducanh2912/next-pwa`) — Cache API / offline del plan
 - **Backend/datos:** Supabase (auth, storage, Postgres agregado comunitario)
 - **IA:** OpenAI (GPT, Vision, TTS, embeddings, Agents SDK)
-- **Hosting:** Vercel (recomendado)
+- **Hosting:** VPS (EasyPanel + Docker Swarm + Traefik) · https://18-59.grisbope.com
+  (no Vercel en producción)
 
 ---
 

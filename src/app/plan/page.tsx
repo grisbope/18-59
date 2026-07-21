@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import buildingsData from "@/data/buildings.json";
 import type { Building, FamilyPlan, HazardType } from "@/lib/utils";
-import { MapPicker } from "@/components/MapPicker";
+import { MapPicker, type LocationMode } from "@/components/MapPicker";
 import { BuildingTwinCard } from "@/components/BuildingTwinCard";
 import { ActionPlanViewer } from "@/components/ActionPlanViewer";
 import {
@@ -15,8 +15,9 @@ import { CommunityDashboard } from "@/components/CommunityDashboard";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/components/AuthProvider";
 import { savePlanLocal } from "@/lib/offline";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RiskBadge } from "@/components/ui/RiskBadge";
 
 const buildings = buildingsData as Building[];
 
@@ -30,6 +31,7 @@ const steps = [
 
 export default function PlanPage() {
   const { user } = useAuth();
+  const [locationMode, setLocationMode] = useState<LocationMode>("templates");
   const [selected, setSelected] = useState<Building | undefined>(
     buildings.find((b) => b.id === "b-001") ?? buildings[0]
   );
@@ -212,18 +214,71 @@ export default function PlanPage() {
       )}
 
       <section aria-labelledby="step-map" className="mb-10">
-        <h2 id="step-map" className="mb-4 text-lg font-bold">
+        <h2 id="step-map" className="mb-3 text-lg font-bold">
           2. Dónde vives
         </h2>
+
+        <div
+          className="mb-4 inline-flex rounded-md border border-[var(--color-border)] bg-white p-1"
+          role="tablist"
+          aria-label="Cómo indicar tu ubicación"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={locationMode === "templates"}
+            className={cn(
+              "rounded px-3 py-2 text-sm font-semibold",
+              locationMode === "templates"
+                ? "bg-[var(--color-terracotta)] text-white"
+                : "text-[var(--color-muted)] hover:text-[var(--color-ink)]"
+            )}
+            onClick={() => {
+              setLocationMode("templates");
+              const def =
+                buildings.find((b) => b.id === "b-001") ?? buildings[0];
+              setSelected(def);
+              setPlan(null);
+              setVisionAnalysis(null);
+              setShared(false);
+            }}
+          >
+            Usar plantilla
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={locationMode === "address"}
+            className={cn(
+              "rounded px-3 py-2 text-sm font-semibold",
+              locationMode === "address"
+                ? "bg-[var(--color-terracotta)] text-white"
+                : "text-[var(--color-muted)] hover:text-[var(--color-ink)]"
+            )}
+            onClick={() => {
+              setLocationMode("address");
+              setSelected(undefined);
+              setPlan(null);
+              setVisionAnalysis(null);
+              setShared(false);
+            }}
+          >
+            Poner mi dirección
+          </button>
+        </div>
+
         <p className="mb-3 text-sm text-[var(--color-muted)]">
-          Busca tu calle o dirección en Portoviejo. También puedes elegir una
-          referencia del mapa.
+          {locationMode === "templates"
+            ? "Elige una vivienda de referencia (con perfil de riesgo listo). Ideal para el pitch."
+            : "Busca tu calle o dirección real. Sin gemelo digital inventado: solo tu ubicación."}
         </p>
+
         <MapPicker
+          mode={locationMode}
           buildings={
             selected && selected.id.startsWith("custom-")
-              ? [...buildings, selected]
-              : buildings
+              ? [...buildings.filter((b) => !b.id.startsWith("custom-")), selected]
+              : buildings.filter((b) => !b.id.startsWith("custom-"))
           }
           selectedId={selected?.id}
           onSelect={(b) => {
@@ -233,9 +288,27 @@ export default function PlanPage() {
             setShared(false);
           }}
         />
-        {selected && (
+
+        {selected && locationMode === "templates" && !selected.id.startsWith("custom-") && (
           <div className="mt-6">
             <BuildingTwinCard building={selected} />
+          </div>
+        )}
+
+        {selected && locationMode === "address" && (
+          <div className="mt-4 flex items-start gap-3 rounded-md border border-[var(--color-border)] bg-white p-4">
+            <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-terracotta)]" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-resilience)]">
+                Dirección seleccionada
+              </p>
+              <p className="font-semibold text-[var(--color-ink)]">{selected.name}</p>
+              <p className="text-sm text-[var(--color-muted)]">{selected.address}</p>
+              <p className="mt-1 text-xs text-[var(--color-muted)]">
+                Zona de referencia para el plan: {selected.sectorName}
+              </p>
+            </div>
+            <RiskBadge level={selected.riskLevel} />
           </div>
         )}
       </section>
@@ -331,7 +404,7 @@ export default function PlanPage() {
           5. Generar plan de acción
         </h2>
         <p className="mb-4 max-w-2xl text-sm text-[var(--color-muted)]">
-          Con edificio, hogar y fotos, el agente analiza el riesgo visual y arma
+          Con ubicación, hogar y fotos, el agente analiza el riesgo visual y arma
           tu plan vivo (antes / durante / después).
         </p>
         <Button
@@ -351,7 +424,7 @@ export default function PlanPage() {
         </Button>
         {!canGenerate && (
           <p className="mt-2 text-xs text-[var(--color-muted)]">
-            Completa edificio + fotos obligatorias (exterior e interior).
+            Completa ubicación + fotos obligatorias (exterior e interior).
           </p>
         )}
         {error && (
