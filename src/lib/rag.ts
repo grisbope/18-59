@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from "fs";
 import path from "path";
 import { getOpenAI, hasOpenAI } from "./openai";
+import { plainExcerpt } from "./text";
 
 export interface CorpusChunk {
   id: string;
@@ -114,6 +115,6 @@ export async function retrieveRAG(query: string, k = 5): Promise<CorpusChunk[]> 
 export function formatSources(chunks: CorpusChunk[]) {
   return chunks.map((c) => ({
     title: c.title,
-    excerpt: c.text.slice(0, 220) + (c.text.length > 220 ? "…" : ""),
+    excerpt: plainExcerpt(c.text, 220),
   }));
 }

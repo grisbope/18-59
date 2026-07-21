@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { downloadPlanMarkdown } from "@/lib/offline";
+import { stripMarkdown } from "@/lib/text";
 import type { FamilyPlan } from "@/lib/utils";
 import { hazardLabel } from "@/lib/utils";
 import { Download, Share2, Volume2, VolumeX } from "lucide-react";
@@ -91,15 +92,15 @@ export function ActionPlanViewer({
       </div>
 
       <p className="mt-4 text-sm leading-relaxed text-[var(--color-ink-soft)]">
-        {plan.familySummary}
+        {stripMarkdown(plan.familySummary)}
       </p>
 
       <div className="mt-4 grid gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-paper)] p-3 text-sm sm:grid-cols-2">
         <p>
-          <strong>Punto de encuentro:</strong> {plan.meetingPoint}
+          <strong>Punto de encuentro:</strong> {stripMarkdown(plan.meetingPoint)}
         </p>
         <p>
-          <strong>Ruta:</strong> {plan.evacuationRoute}
+          <strong>Ruta:</strong> {stripMarkdown(plan.evacuationRoute)}
         </p>
       </div>
 
@@ -118,7 +119,7 @@ export function ActionPlanViewer({
             </h4>
             <ol className="mt-2 list-decimal space-y-2 pl-4 text-sm text-[var(--color-ink-soft)]">
               {section.items.map((item) => (
-                <li key={item}>{item}</li>
+                <li key={item}>{stripMarkdown(item)}</li>
               ))}
             </ol>
           </section>
@@ -134,7 +135,7 @@ export function ActionPlanViewer({
             <li key={s.title + s.excerpt.slice(0, 20)} className="border-l-2 border-[var(--color-terracotta)] pl-3">
               <strong className="text-[var(--color-ink)]">{s.title}</strong>
               <br />
-              {s.excerpt}
+              {stripMarkdown(s.excerpt)}
             </li>
           ))}
         </ul>

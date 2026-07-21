@@ -2,6 +2,7 @@ import buildingsData from "@/data/buildings.json";
 import type { Building, FamilyPlan, FamilyProfile, SectorStat } from "./utils";
 import { formatSources, retrieveRAG } from "./rag";
 import { getOpenAI, hasOpenAI } from "./openai";
+import { stripMarkdown } from "./text";
 import {
   getSupabaseAdmin,
   hasSupabase,
@@ -327,6 +328,7 @@ export async function runResilienceAgent(input: {
         role: "system",
         content: `Eres el agente 18:59 de Portoviejo. Generas planes de resiliencia familiar en español, claros y accionables.
 Siempre cita fuentes del contexto RAG. No inventes normas. No digas que sustituyes a autoridades.
+Los strings del JSON deben ser texto plano: sin markdown (nada de **, __, #, ni enlaces).
 Responde SOLO JSON con keys: familySummary, before (string[]), during (string[]), after (string[]), meetingPoint, evacuationRoute.`,
       },
       {
@@ -354,6 +356,9 @@ ${context}`,
     return buildFallbackPlan(building, input.profile, sources);
   }
 
+  const cleanItems = (items: string[] | undefined, fallback: string[]) =>
+    (items?.length ? items : fallback).map((i) => stripMarkdown(i));
+
   return {
     id: `plan-${building.id}-${Date.now()}`,
     buildingId: building.id,
@@ -362,15 +367,31 @@ ${context}`,
     sectorName: building.sectorName,
     riskLevel: building.riskLevel,
     hazardType: input.profile.hazardType,
-    meetingPoint: parsed.meetingPoint || building.safeMeetingPoint,
-    evacuationRoute: parsed.evacuationRoute || building.evacuationNotes,
-    before: { title: "Antes", items: parsed.before?.length ? parsed.before : ["Preparar kit y roles."] },
-    during: { title: "Durante", items: parsed.during?.length ? parsed.during : ["Protégete y evacúa con calma."] },
-    after: { title: "Después", items: parsed.after?.length ? parsed.after : ["Punto de encuentro y canales oficiales."] },
+    meetingPoint: stripMarkdown(
+      parsed.meetingPoint || building.safeMeetingPoint
+    ),
+    evacuationRoute: stripMarkdown(
+      parsed.evacuationRoute || building.evacuationNotes
+    ),
+    before: {
+      title: "Antes",
+      items: cleanItems(parsed.before, ["Preparar kit y roles."]),
+    },
+    during: {
+      title: "Durante",
+      items: cleanItems(parsed.during, ["Protégete y evacúa con calma."]),
+    },
+    after: {
+      title: "Después",
+      items: cleanItems(parsed.after, [
+        "Punto de encuentro y canales oficiales.",
+      ]),
+    },
     sources,
     generatedAt: new Date().toISOString(),
-    familySummary:
+    familySummary: stripMarkdown(
       parsed.familySummary ||
-      `Plan personalizado para ${building.name} — riesgo ${building.riskLevel}.`,
+        `Plan personalizado para ${building.name} — riesgo ${building.riskLevel}.`
+    ),
   };
 }
