@@ -69,12 +69,31 @@ export function SiteHeader() {
           </Link>
           <button
             type="button"
-            className="rounded-md border border-[var(--color-border)] px-3 py-2 text-sm font-semibold"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[var(--color-border)] text-[var(--color-ink)]"
             aria-expanded={menuOpen}
             aria-controls="mobile-nav"
+            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
             onClick={() => setMenuOpen((v) => !v)}
           >
-            Menú
+            {menuOpen ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path
+                  d="M6 6l12 12M18 6L6 18"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path
+                  d="M4 7h16M4 12h16M4 17h16"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            )}
           </button>
         </div>
       </div>
