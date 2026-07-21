@@ -269,23 +269,31 @@ function buildFallbackPlan(
   if (profile.hasDisability)
     inclusion.push("Definir ruta accesible y señal acordada; compartir el plan con vecinos de apoyo.");
 
+  const kit = [
+    "Preparar kit de emergencia (mochila o caja lista): agua embotellada (al menos 3 litros por persona para 1–2 días), alimentos no perecibles (enlatados, barras, galletas, frutos secos), abrelatas manual.",
+    "Botiquín: gasas, vendas, alcohol o antiséptico, curitas, tijeras, guantes, analgésicos, termómetro, medicamentos personales con receta y lista de dosis.",
+    "También en el kit: linterna + pilas, radio a pilas o celular con batería externa, silbato, documentos en funda (cédulas, seguros), dinero en efectivo, llaves de repuesto, cargador, mascarillas, ropa y manta liviana.",
+  ];
+
   const hazard = profile.hazardType;
   const before =
     hazard === "sismo"
       ? [
-          "Identificar salidas y el punto de encuentro del edificio.",
-          "Preparar kit: agua, linterna, documentos, medicamentos, radio.",
-          "Asegurar objetos que puedan caer; acordar roles familiares.",
+          "Identificar salidas y el punto de encuentro del edificio o barrio.",
+          ...kit,
+          "Asegurar objetos que puedan caer; acordar roles familiares (quién ayuda a quién).",
           ...inclusion,
         ]
       : hazard === "inundacion"
         ? [
-            "Conocer rutas a zona alta y cotas locales de inundación.",
+            "Conocer rutas a zona alta y avisos locales de inundación.",
+            ...kit,
             "Elevar documentos y medicamentos; acordar señal de salida temprana.",
             ...inclusion,
           ]
         : [
             "Almacenar agua de forma segura; priorizar usos esenciales.",
+            ...kit,
             "Vigilar salud de adultos mayores y niños ante estrés hídrico.",
             ...inclusion,
           ];
@@ -378,10 +386,11 @@ export async function runResilienceAgent(input: {
     messages: [
       {
         role: "system",
-        content: `Eres el agente 18:59 de Portoviejo. Generas planes de resiliencia familiar en español, claros y accionables.
+        content: `Eres el agente 18:59 de Portoviejo. Generas planes de resiliencia familiar en español claro, corto y accionable.
 Siempre cita fuentes del contexto RAG. No inventes normas. No digas que sustituyes a autoridades.
-Si hay análisis visual, incorpóralo en familySummary y en acciones concretas (antes/durante/después) cuando aporte señales útiles.
-Los strings del JSON deben ser texto plano: sin markdown (nada de **, __, #, ni enlaces).
+En "before" incluye SIEMPRE un kit de emergencia completo y práctico: agua, alimentos no perecibles, botiquín, linterna, radio/batería, documentos, medicamentos, dinero en efectivo, silbato, cargador.
+Si hay análisis visual, úsalo con prudencia.
+Texto plano: sin markdown (nada de **, __, #).
 Responde SOLO JSON con keys: familySummary, before (string[]), during (string[]), after (string[]), meetingPoint, evacuationRoute.`,
       },
       {

@@ -1,0 +1,72 @@
+[
+  {
+    "id": "park-botanico",
+    "name": "Parque Botánico Portoviejo",
+    "address": "Av. Universitaria / vía al Botánico, Portoviejo",
+    "sectorId": "andre-bello",
+    "sectorName": "Andrés Bello / Botánico",
+    "lat": -1.0375,
+    "lng": -80.4548,
+    "riskLevel": "medio",
+    "hazards": ["sismo", "calor", "aglomeracion"],
+    "safeMeetingPoint": "Plazoleta de ingreso / estacionamiento principal",
+    "evacuationNotes": "Salir por el acceso principal hacia avenida; evitar senderos estrechos si hay pánico.",
+    "notes": "Árboles altos, senderos y zonas de sombra. Eventos familiares frecuentes."
+  },
+  {
+    "id": "park-vicente-amanoa",
+    "name": "Parque Central Vicente Amador Flor",
+    "address": "Centro histórico, frente a la Catedral, Portoviejo",
+    "sectorId": "centro-historico",
+    "sectorName": "Centro Histórico",
+    "lat": -1.0546,
+    "lng": -80.4544,
+    "riskLevel": "alto",
+    "hazards": ["sismo", "caida-fachadas", "aglomeracion"],
+    "safeMeetingPoint": "Plaza abierta lejos de fachadas del casco antiguo",
+    "evacuationNotes": "Alejarse de cornisas y edificios del perímetro; reunirse en zona abierta señalizada.",
+    "notes": "Entorno de escombros históricos y tráfico; alto flujo peatonal."
+  },
+  {
+    "id": "park-la-rotonda",
+    "name": "Parque La Rotonda",
+    "address": "Av. Universitaria, Portoviejo",
+    "sectorId": "andre-bello",
+    "sectorName": "Andrés Bello",
+    "lat": -1.0452,
+    "lng": -80.4489,
+    "riskLevel": "medio",
+    "hazards": ["sismo", "trafico", "calor"],
+    "safeMeetingPoint": "Zona verde central / juego infantil alejado de la avenida",
+    "evacuationNotes": "Evitar cruzar avenida con prisa; usar semáforos y aceras amplias.",
+    "notes": "Parque urbano con juegos y ferias temporales."
+  },
+  {
+    "id": "park-eloy-alfaro",
+    "name": "Parque Eloy Alfaro",
+    "address": "Ciudadela Eloy Alfaro, Portoviejo",
+    "sectorId": "florida",
+    "sectorName": "Florida / Eloy Alfaro",
+    "lat": -1.0628,
+    "lng": -80.4621,
+    "riskLevel": "medio",
+    "hazards": ["sismo", "inundacion", "calor"],
+    "safeMeetingPoint": "Cancha o plazoleta interna del parque",
+    "evacuationNotes": "Si hay lluvia intensa, evitar zonas bajas; salir hacia calles elevadas del barrio.",
+    "notes": "Parque barrial; eventos deportivos y culturales."
+  },
+  {
+    "id": "park-memorial",
+    "name": "Plaza Memorial San Gregorio",
+    "address": "San Gregorio, Portoviejo — monumento reloj 18:58",
+    "sectorId": "san-gregorio",
+    "sectorName": "San Gregorio / Plaza Memorial",
+    "lat": -1.0519,
+    "lng": -80.4558,
+    "riskLevel": "alto",
+    "hazards": ["sismo", "aglomeracion", "caida-fachadas"],
+    "safeMeetingPoint": "Monumento del reloj 18:58 — zona abierta",
+    "evacuationNotes": "Mantener distancia de fachadas del casco; no permanecer bajo postes o estructuras temporales.",
+    "notes": "Sitio simbólico post-16A; actos conmemorativos y visitas."
+  }
+]

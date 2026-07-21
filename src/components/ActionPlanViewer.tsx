@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { RiskBadge } from "@/components/ui/RiskBadge";
@@ -9,6 +9,15 @@ import { stripMarkdown } from "@/lib/text";
 import type { FamilyPlan } from "@/lib/utils";
 import { hazardLabel } from "@/lib/utils";
 import { Download, Share2, Volume2, VolumeX } from "lucide-react";
+
+function pickSpanishVoice(): SpeechSynthesisVoice | null {
+  const voices = window.speechSynthesis?.getVoices?.() ?? [];
+  return (
+    voices.find((v) => /es[-_](EC|MX|ES|US)/i.test(v.lang)) ||
+    voices.find((v) => v.lang.toLowerCase().startsWith("es")) ||
+    null
+  );
+}
 
 export function ActionPlanViewer({
   plan,
@@ -21,20 +30,80 @@ export function ActionPlanViewer({
 }) {
   const [speaking, setSpeaking] = useState(false);
   const [ttsBusy, setTtsBusy] = useState(false);
+  const [ttsError, setTtsError] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
+
+  function stopSpeech() {
+    try {
+      window.speechSynthesis?.cancel();
+    } catch {
+      /* ignore */
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current = null;
+    }
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+    setSpeaking(false);
+  }
+
+  useEffect(() => {
+    // Precargar voces Web Speech (Chrome las carga async)
+    window.speechSynthesis?.getVoices?.();
+    const onVoices = () => window.speechSynthesis?.getVoices?.();
+    window.speechSynthesis?.addEventListener?.("voiceschanged", onVoices);
+    return () => {
+      stopSpeech();
+      window.speechSynthesis?.removeEventListener?.("voiceschanged", onVoices);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function speakWithWebSpeech(text: string) {
+    return new Promise<void>((resolve, reject) => {
+      if (!window.speechSynthesis) {
+        reject(new Error("Este navegador no puede leer en voz alta"));
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "es-ES";
+      u.rate = 1;
+      const voice = pickSpanishVoice();
+      if (voice) u.voice = voice;
+      u.onend = () => {
+        setSpeaking(false);
+        resolve();
+      };
+      u.onerror = () => {
+        setSpeaking(false);
+        reject(new Error("No se pudo usar la voz del navegador"));
+      };
+      setSpeaking(true);
+      window.speechSynthesis.speak(u);
+    });
+  }
 
   async function speakPlan() {
-    if (speaking) {
-      window.speechSynthesis?.cancel();
-      setSpeaking(false);
+    if (speaking || ttsBusy) {
+      stopSpeech();
       return;
     }
+    setTtsError(null);
     setTtsBusy(true);
+
     const text = [
       plan.familySummary,
-      "Antes: " + plan.before.items.join(". "),
+      "Kit de emergencia y antes: " + plan.before.items.join(". "),
       "Durante: " + plan.during.items.join(". "),
       "Después: " + plan.after.items.join(". "),
       "Punto de encuentro: " + plan.meetingPoint,
+      "Ruta: " + plan.evacuationRoute,
     ].join(". ");
 
     try {
@@ -43,30 +112,49 @@ export function ActionPlanViewer({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: text.slice(0, 3500) }),
       });
-      if (res.ok && res.headers.get("content-type")?.includes("audio")) {
+      const ctype = res.headers.get("content-type") || "";
+
+      if (res.ok && ctype.includes("audio")) {
         const blob = await res.blob();
+        if (blob.size < 500) {
+          throw new Error("Audio vacío");
+        }
         const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        setSpeaking(true);
+        objectUrlRef.current = url;
+        const audio = new Audio();
+        audio.preload = "auto";
+        audio.src = url;
+        audioRef.current = audio;
         audio.onended = () => {
           setSpeaking(false);
-          URL.revokeObjectURL(url);
+          if (objectUrlRef.current) {
+            URL.revokeObjectURL(objectUrlRef.current);
+            objectUrlRef.current = null;
+          }
+          audioRef.current = null;
         };
-        await audio.play();
-      } else {
-        // Fallback Web Speech API
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = "es-ES";
-        u.onend = () => setSpeaking(false);
+        audio.onerror = () => {
+          setSpeaking(false);
+          setTtsError("No se pudo reproducir el audio. Probando voz del navegador…");
+        };
         setSpeaking(true);
-        window.speechSynthesis.speak(u);
+        // play() debe ir en el mismo gesto de usuario; ya estamos en el click handler
+        await audio.play();
+        return;
       }
-    } catch {
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = "es-ES";
-      u.onend = () => setSpeaking(false);
-      setSpeaking(true);
-      window.speechSynthesis.speak(u);
+
+      await speakWithWebSpeech(text);
+    } catch (e) {
+      try {
+        await speakWithWebSpeech(text);
+      } catch {
+        setTtsError(
+          e instanceof Error
+            ? e.message
+            : "No se pudo reproducir la voz. Sube el volumen o prueba en otro navegador."
+        );
+        setSpeaking(false);
+      }
     } finally {
       setTtsBusy(false);
     }
@@ -79,7 +167,7 @@ export function ActionPlanViewer({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-resilience)]">
-            Plan vivo de resiliencia familiar
+            Tu plan familiar
           </p>
           <CardTitle id="plan-title" className="mt-1">
             {plan.buildingName}
@@ -97,7 +185,8 @@ export function ActionPlanViewer({
 
       <div className="mt-4 grid gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-paper)] p-3 text-sm sm:grid-cols-2">
         <p>
-          <strong>Punto de encuentro:</strong> {stripMarkdown(plan.meetingPoint)}
+          <strong>Punto de encuentro:</strong>{" "}
+          {stripMarkdown(plan.meetingPoint)}
         </p>
         <p>
           <strong>Ruta:</strong> {stripMarkdown(plan.evacuationRoute)}
@@ -127,12 +216,18 @@ export function ActionPlanViewer({
       </div>
 
       <section className="mt-6" aria-labelledby="sources-title">
-        <h4 id="sources-title" className="text-sm font-bold uppercase tracking-wide">
+        <h4
+          id="sources-title"
+          className="text-sm font-bold uppercase tracking-wide"
+        >
           Fuentes citadas
         </h4>
         <ul className="mt-2 space-y-2 text-sm text-[var(--color-muted)]">
           {plan.sources.map((s) => (
-            <li key={s.title + s.excerpt.slice(0, 20)} className="border-l-2 border-[var(--color-terracotta)] pl-3">
+            <li
+              key={s.title + s.excerpt.slice(0, 20)}
+              className="border-l-2 border-[var(--color-terracotta)] pl-3"
+            >
               <strong className="text-[var(--color-ink)]">{s.title}</strong>
               <br />
               {stripMarkdown(s.excerpt)}
@@ -146,12 +241,16 @@ export function ActionPlanViewer({
           type="button"
           variant="secondary"
           size="sm"
-          onClick={speakPlan}
+          onClick={() => void speakPlan()}
           disabled={ttsBusy}
           aria-pressed={speaking}
         >
-          {speaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-          {speaking ? "Detener voz" : "Escuchar plan"}
+          {speaking ? (
+            <VolumeX className="h-4 w-4" />
+          ) : (
+            <Volume2 className="h-4 w-4" />
+          )}
+          {speaking ? "Detener voz" : ttsBusy ? "Preparando voz…" : "Escuchar plan"}
         </Button>
         <Button
           type="button"
@@ -160,7 +259,7 @@ export function ActionPlanViewer({
           onClick={() => downloadPlanMarkdown(plan)}
         >
           <Download className="h-4 w-4" />
-          Descargar
+          Guardar
         </Button>
         {onShare && (
           <Button
@@ -171,10 +270,15 @@ export function ActionPlanViewer({
             disabled={sharing}
           >
             <Share2 className="h-4 w-4" />
-            {sharing ? "Compartiendo…" : "Compartir con comunidad"}
+            {sharing ? "Compartiendo…" : "Compartir con mi barrio"}
           </Button>
         )}
       </div>
+      {ttsError && (
+        <p className="mt-2 text-sm text-[var(--color-terracotta)]" role="alert">
+          {ttsError}
+        </p>
+      )}
     </Card>
   );
 }

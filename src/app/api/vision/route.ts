@@ -12,6 +12,8 @@ type VisionBody = {
   interior?: string;
   /** Hasta 3 fotos opcionales: barrio, lados, entorno cercano. */
   context?: string[];
+  /** home (default) exige interior; park exige lugar + al menos una del entorno o acceso. */
+  mode?: "home" | "park";
 };
 
 function isValidImage(url: unknown): url is string {
@@ -30,28 +32,55 @@ export async function POST(req: Request) {
     const body = (await req.json()) as VisionBody;
 
     const exterior = body.exterior || body.image;
-    const interior = body.interior;
     const contextPhotos = Array.isArray(body.context)
       ? body.context.filter(isValidImage).slice(0, 3)
       : [];
+    const mode = body.mode === "park" ? "park" : "home";
+    // En parque, "interior" = acceso/escenario secundario (opcional si hay entorno)
+    const interior =
+      body.interior ||
+      (mode === "park" ? contextPhotos[0] : undefined);
 
     if (!isValidImage(exterior)) {
       return NextResponse.json(
-        { error: "Foto del exterior (fachada) obligatoria" },
+        {
+          error:
+            mode === "park"
+              ? "Foto del lugar del evento obligatoria"
+              : "Foto del exterior (fachada) obligatoria",
+        },
         { status: 400 }
       );
     }
-    if (!isValidImage(interior)) {
+    if (mode === "home" && !isValidImage(interior)) {
       return NextResponse.json(
         { error: "Foto del interior obligatoria" },
         { status: 400 }
       );
     }
-    if (isTooSmall(exterior) || isTooSmall(interior)) {
+    if (mode === "park" && !isValidImage(interior) && contextPhotos.length === 0) {
       return NextResponse.json(
         {
           error:
-            "Alguna imagen obligatoria es demasiado pequeña o vacía. Sube fotos claras.",
+            "Sube al menos una foto del acceso o del entorno cercano al parque.",
+        },
+        { status: 400 }
+      );
+    }
+    if (isTooSmall(exterior)) {
+      return NextResponse.json(
+        {
+          error:
+            "La foto del lugar es demasiado pequeña o vacía. Sube una foto clara.",
+        },
+        { status: 400 }
+      );
+    }
+    if (isValidImage(interior) && isTooSmall(interior)) {
+      return NextResponse.json(
+        {
+          error:
+            "Alguna imagen es demasiado pequeña o vacía. Sube fotos claras.",
         },
         { status: 400 }
       );
@@ -69,7 +98,9 @@ export async function POST(req: Request) {
     }
 
     const chunks = await retrieveRAG(
-      "fachada interior planta blanda grietas mampostería entorno edificios vecinos Portoviejo post-16A",
+      mode === "park"
+        ? "parque evento aglomeración evacuación Portoviejo sismo entorno árboles postes"
+        : "fachada interior planta blanda grietas mampostería entorno edificios vecinos Portoviejo post-16A",
       4
     );
     const ragContext = chunks.map((c) => c.text).join("\n");
@@ -77,7 +108,15 @@ export async function POST(req: Request) {
     if (!hasOpenAI()) {
       return NextResponse.json({
         analysis: stripMarkdown(
-          `Análisis demo (sin OPENAI_API_KEY).
+          mode === "park"
+            ? `Análisis demo (sin OPENAI_API_KEY) — PortoParques.
+
+Revisa: salidas, aglomeración, árboles/postes, toldos, tráfico perimetral.
+Entorno: ${contextPhotos.length} foto(s).
+${ragContext.slice(0, 400)}
+
+No es un peritaje. Coordina con autoridades locales si el evento es masivo.`
+            : `Análisis demo (sin OPENAI_API_KEY).
 
 Fotos recibidas: exterior sí, interior sí, entorno ${contextPhotos.length}/3.
 
@@ -94,7 +133,7 @@ Esto no es un peritaje. Consulta a un técnico competente y a autoridades locale
         mode: "demo",
         photos: {
           exterior: true,
-          interior: true,
+          interior: Boolean(interior),
           context: contextPhotos.length,
         },
       });
@@ -108,7 +147,19 @@ Esto no es un peritaje. Consulta a un técnico competente y a autoridades locale
     > = [
       {
         type: "text",
-        text: `Contexto técnico (RAG):
+        text:
+          mode === "park"
+            ? `Contexto técnico (RAG):
+${ragContext}
+
+Analiza fotos de un EVENTO EN PARQUE (Portoviejo):
+1) Lugar del evento
+2) Acceso / escenario / zona secundaria (si hay)
+3) Entorno cercano (${contextPhotos.length} fotos)
+
+Señala riesgos visibles: salidas bloqueadas, aglomeración, árboles/postes, toldos, tráfico, calor/sombra.
+Español claro, sin markdown. Viñetas con •.`
+            : `Contexto técnico (RAG):
 ${ragContext}
 
 Analiza las fotos en este orden:
@@ -119,16 +170,32 @@ Analiza las fotos en este orden:
 Indica señales visibles de vulnerabilidad (sin alarmismo), qué aporta el entorno (edificios vecinos, calles, elementos que puedan caer) y recomendaciones prácticas para la familia.
 Responde en español claro. NO uses markdown (sin **, #, listas con -). Usa párrafos cortos o viñetas con el símbolo •.`,
       },
-      { type: "text", text: "Foto 1 — Exterior / fachada:" },
+      {
+        type: "text",
+        text:
+          mode === "park"
+            ? "Foto 1 — Lugar del evento:"
+            : "Foto 1 — Exterior / fachada:",
+      },
       { type: "image_url", image_url: { url: exterior } },
-      { type: "text", text: "Foto 2 — Interior:" },
-      { type: "image_url", image_url: { url: interior } },
     ];
 
-    contextPhotos.forEach((url, i) => {
+    if (isValidImage(interior)) {
       contentParts.push({
         type: "text",
-        text: `Foto ${i + 3} — Entorno / barrio / lado:`,
+        text:
+          mode === "park"
+            ? "Foto 2 — Acceso / zona secundaria:"
+            : "Foto 2 — Interior:",
+      });
+      contentParts.push({ type: "image_url", image_url: { url: interior } });
+    }
+
+    contextPhotos.forEach((url, i) => {
+      if (url === interior) return;
+      contentParts.push({
+        type: "text",
+        text: `Foto entorno ${i + 1}:`,
       });
       contentParts.push({ type: "image_url", image_url: { url } });
     });
@@ -155,7 +222,7 @@ Cierra recomendando evaluación profesional. Menciona que las fotos no se compar
       mode: "openai",
       photos: {
         exterior: true,
-        interior: true,
+        interior: Boolean(interior),
         context: contextPhotos.length,
       },
     });

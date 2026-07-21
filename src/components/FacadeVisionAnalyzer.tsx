@@ -134,24 +134,30 @@ function SlotUpload({
   );
 }
 
-/** Intake de fotos para evaluar riesgo. El análisis ocurre al generar el plan. */
+/** Intake de fotos. variant=park: lugar + acceso/entorno. */
 export function FacadeVisionAnalyzer({
   onPhotosChange,
   analysis,
+  variant = "home",
 }: {
   onPhotosChange?: (photos: VisionPhotos, ready: boolean) => void;
-  /** Resultado Vision tras generar el plan (opcional). */
   analysis?: string | null;
+  variant?: "home" | "park";
 }) {
   const [slots, setSlots] = useState(emptySlots);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const photos = slotsToPhotos(slots);
-    const ready = Boolean(photos.exterior && photos.interior);
+    const ready =
+      variant === "park"
+        ? Boolean(
+            photos.exterior && (photos.interior || photos.context.length > 0)
+          )
+        : Boolean(photos.exterior && photos.interior);
     onPhotosChange?.(photos, ready);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slots]);
+  }, [slots, variant]);
 
   async function setSlot(key: SlotKey, file: File | null) {
     if (!file) return;
@@ -178,22 +184,36 @@ export function FacadeVisionAnalyzer({
   const contextCount = [slots.ctx0, slots.ctx1, slots.ctx2].filter(
     (s) => s.preview
   ).length;
-  const ready = Boolean(slots.exterior.preview && slots.interior.preview);
+  const ready =
+    variant === "park"
+      ? Boolean(
+          slots.exterior.preview &&
+            (slots.interior.preview || contextCount > 0)
+        )
+      : Boolean(slots.exterior.preview && slots.interior.preview);
+
+  const isPark = variant === "park";
 
   return (
     <Card aria-labelledby="vision-title">
-      <CardTitle id="vision-title">Fotos de tu vivienda</CardTitle>
+      <CardTitle id="vision-title">
+        {isPark ? "Fotos del parque y del evento" : "Fotos de tu vivienda"}
+      </CardTitle>
       <CardDescription>
-        Necesarias para evaluar el riesgo visual: exterior e interior. Opcionales:
-        hasta 3 del barrio, de los lados o de lo cercano. Se analizan al generar
-        el plan. No se publican en el tablero comunitario.
+        {isPark
+          ? "Obligatoria: el lugar del evento. También sube acceso o entorno cercano (para ver riesgos alrededor). No se publican."
+          : "Necesarias: exterior e interior. Opcionales: hasta 3 del barrio o de los lados. Se analizan al crear el plan. No se publican."}
       </CardDescription>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <SlotUpload
           id="vision-exterior"
-          label="Exterior / fachada"
-          hint="Frente de la casa o edificio"
+          label={isPark ? "Lugar del evento" : "Exterior / fachada"}
+          hint={
+            isPark
+              ? "Escenario, cancha o zona principal"
+              : "Frente de la casa o edificio"
+          }
           required
           icon={<Building2 className="h-4 w-4 text-[var(--color-terracotta)]" />}
           slot={slots.exterior}
@@ -202,9 +222,13 @@ export function FacadeVisionAnalyzer({
         />
         <SlotUpload
           id="vision-interior"
-          label="Interior"
-          hint="Pasillo, sala o zona estructural visible"
-          required
+          label={isPark ? "Acceso / salida" : "Interior"}
+          hint={
+            isPark
+              ? "Entrada, salida o zona de reunión"
+              : "Pasillo, sala o zona estructural visible"
+          }
+          required={!isPark}
           icon={<Home className="h-4 w-4 text-[var(--color-terracotta)]" />}
           slot={slots.interior}
           onPick={(f) => void setSlot("interior", f)}
@@ -215,15 +239,26 @@ export function FacadeVisionAnalyzer({
       <div className="mt-4">
         <p className="mb-2 flex items-center gap-2 text-sm font-semibold">
           <MapPinned className="h-4 w-4 text-[var(--color-resilience)]" />
-          Entorno cercano ({contextCount}/3)
+          {isPark ? "Entorno del parque" : "Entorno cercano"} ({contextCount}/3)
+          {isPark && (
+            <span className="text-xs font-normal text-[var(--color-terracotta)]">
+              Al menos 1 si no hay foto de acceso
+            </span>
+          )}
         </p>
         <div className="grid gap-3 sm:grid-cols-3">
           {(
-            [
-              ["ctx0", "Lado / calle", "Fachada lateral o calle"],
-              ["ctx1", "Barrio", "Manzana o vecinos"],
-              ["ctx2", "Cercano", "Elementos que puedan caer"],
-            ] as const
+            isPark
+              ? ([
+                  ["ctx0", "Alrededor", "Árboles, postes, calles"],
+                  ["ctx1", "Accesos", "Entradas y tráfico"],
+                  ["ctx2", "Riesgos cercanos", "Toldos, escenarios, fachadas"],
+                ] as const)
+              : ([
+                  ["ctx0", "Lado / calle", "Fachada lateral o calle"],
+                  ["ctx1", "Barrio", "Manzana o vecinos"],
+                  ["ctx2", "Cercano", "Elementos que puedan caer"],
+                ] as const)
           ).map(([key, label, hint]) => (
             <SlotUpload
               key={key}
@@ -241,7 +276,9 @@ export function FacadeVisionAnalyzer({
 
       {!ready && (
         <p className="mt-3 text-xs text-[var(--color-muted)]">
-          Faltan fotos obligatorias (exterior e interior) para generar el plan.
+          {isPark
+            ? "Falta la foto del lugar y al menos acceso o entorno."
+            : "Faltan fotos obligatorias (exterior e interior) para generar el plan."}
         </p>
       )}
 

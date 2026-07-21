@@ -13,7 +13,10 @@ export async function POST(req: Request) {
 
     if (!hasOpenAI()) {
       return NextResponse.json(
-        { error: "TTS OpenAI no configurado; usa Web Speech en cliente", fallback: true },
+        {
+          error: "TTS OpenAI no configurado; usa Web Speech en cliente",
+          fallback: true,
+        },
         { status: 503 }
       );
     }
@@ -21,33 +24,26 @@ export async function POST(req: Request) {
     const openai = getOpenAI()!;
     const input = text.slice(0, 3500);
 
-    try {
-      const speech = await openai.audio.speech.create({
-        model: "gpt-4o-mini-tts",
-        voice: "coral",
-        input,
-      });
-      const buffer = Buffer.from(await speech.arrayBuffer());
-      return new NextResponse(buffer, {
-        headers: {
-          "Content-Type": "audio/mpeg",
-          "Cache-Control": "no-store",
-        },
-      });
-    } catch {
-      const speech = await openai.audio.speech.create({
-        model: "tts-1",
-        voice: "alloy",
-        input,
-      });
-      const buffer = Buffer.from(await speech.arrayBuffer());
-      return new NextResponse(buffer, {
-        headers: {
-          "Content-Type": "audio/mpeg",
-          "Cache-Control": "no-store",
-        },
-      });
+    // tts-1 es más estable y universal (mp3) en móviles
+    const speech = await openai.audio.speech.create({
+      model: "tts-1",
+      voice: "nova",
+      input,
+      response_format: "mp3",
+    });
+    const buffer = Buffer.from(await speech.arrayBuffer());
+    if (!buffer.length) {
+      return NextResponse.json({ error: "Audio vacío", fallback: true }, { status: 500 });
     }
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Content-Length": String(buffer.length),
+        "Cache-Control": "no-store",
+        "Accept-Ranges": "bytes",
+      },
+    });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Error TTS", fallback: true },

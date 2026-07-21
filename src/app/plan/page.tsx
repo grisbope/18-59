@@ -160,12 +160,12 @@ export default function PlanPage() {
           Evaluación de riesgo familiar
         </p>
         <h1 className="mt-1 font-[family-name:var(--font-display)] text-4xl text-[var(--color-ink)]">
-          Datos de tu hogar → plan de acción
+          Cuéntanos sobre tu hogar y recibe tu plan
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">
-          Primero reúne lo necesario para evaluar el riesgo (edificio, hogar y
-          fotos). Al final genera el plan. Tip jurado: empieza por{" "}
-          <strong>Sucre 214</strong> o <strong>Olmedo 88</strong>.
+          Primero reúne lo necesario (ubicación, hogar y fotos). Al final crea
+          tu plan familiar. Puedes usar una vivienda de ejemplo o escribir tu
+          dirección.
         </p>
       </header>
 
@@ -269,8 +269,8 @@ export default function PlanPage() {
 
         <p className="mb-3 text-sm text-[var(--color-muted)]">
           {locationMode === "templates"
-            ? "Elige una vivienda de referencia (con perfil de riesgo listo). Ideal para el pitch."
-            : "Busca tu calle o dirección real. Sin gemelo digital inventado: solo tu ubicación."}
+            ? "Elige una vivienda de ejemplo (con perfil de riesgo listo)."
+            : "Busca tu calle o dirección. Solo usamos tu zona aproximada; sin ficha inventada."}
         </p>
 
         <MapPicker
@@ -419,7 +419,7 @@ export default function PlanPage() {
               {loadingStep || "Generando…"}
             </>
           ) : (
-            "Generar / implementar plan de acción"
+            "Crear mi plan familiar"
           )}
         </Button>
         {!canGenerate && (

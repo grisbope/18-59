@@ -82,9 +82,12 @@ export default function JuradoPage() {
             <Link href="/plan" className="font-semibold underline">
               /plan
             </Link>
-            : mira el tablero comunitario → elige{" "}
-            <strong>Usar plantilla</strong> (Sucre 214 / Olmedo 88){" "}
-            <em>o</em> <strong>Poner mi dirección</strong> (calle real).
+            : tablero → plantilla o dirección → fotos → crear plan. También
+            prueba{" "}
+            <Link href="/portoparques" className="font-semibold underline">
+              /portoparques
+            </Link>{" "}
+            (eventos en parques).
           </li>
           <li>
             Con plantilla verás el perfil de riesgo; con dirección solo la

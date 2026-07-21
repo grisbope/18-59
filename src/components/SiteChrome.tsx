@@ -9,7 +9,8 @@ import { useAuth } from "@/components/AuthProvider";
 const links = [
   { href: "/#problema", label: "Problema" },
   { href: "/#como-funciona", label: "Cómo funciona" },
-  { href: "/plan", label: "Generar plan" },
+  { href: "/plan", label: "Plan familiar" },
+  { href: "/portoparques", label: "18:59 PortoParques" },
   { href: "/comunidad", label: "Comunidad" },
   { href: "/jurado", label: "Jurado" },
 ];
@@ -65,7 +66,7 @@ export function SiteHeader() {
             href="/plan"
             className="rounded-md bg-[var(--color-terracotta)] px-3 py-2 text-sm font-semibold text-white"
           >
-            Generar plan
+            Plan
           </Link>
           <button
             type="button"
