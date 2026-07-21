@@ -19,7 +19,7 @@ const openaiTools = [
   },
   {
     name: "Agents SDK (orquestación)",
-    why: "Encadena: seleccionar edificio → recuperar informe → generar plan → empaquetar documento → registrar en Supabase → actualizar tablero.",
+    why: "Encadena: edificio + perfil + fotos → Vision → RAG informe → plan de acción → documento → Supabase → tablero.",
   },
   {
     name: "Codex",
@@ -131,12 +131,11 @@ Auth: register (Admin autoconfirm) · login · demo@18-59.grisbope.com`}
         </h2>
         <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-[var(--color-ink-soft)]">
           <li>Landing / instalar PWA → CTA «Generar mi plan» o Auth demo.</li>
-          <li>Mapa: seleccionar bloque → ver gemelo digital y nivel de riesgo.</li>
-          <li>Perfil familiar (tamaño, vulnerabilidad, amenaza).</li>
-          <li>Agente genera plan con RAG + GPT; citas de fuentes.</li>
-          <li>Opcional: Vision de fachada + TTS.</li>
+          <li>Tablero comunitario arriba (métrica en vivo).</li>
+          <li>Mapa: seleccionar bloque → gemelo digital y nivel de riesgo.</li>
+          <li>Perfil del hogar + fotos (exterior/interior obligatorias; entorno opcional).</li>
+          <li>Un solo botón genera: Vision → plan RAG+GPT con citas.</li>
           <li>Descargar / cachear offline / compartir con comunidad (Auth opcional).</li>
-          <li>Tablero: % de hogares con plan documentado se actualiza (métrica del pitch).</li>
         </ol>
         <p className="mt-3 text-sm">
           Demo: <Link href="/plan" className="font-semibold text-[var(--color-terracotta)] underline">/plan</Link>

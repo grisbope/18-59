@@ -1,15 +1,20 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { Button } from "@/components/ui/Button";
+import { useEffect, useState, type ReactNode } from "react";
 import { Card, CardDescription, CardTitle } from "@/components/ui/Card";
-import { Camera, Home, Loader2, MapPinned, Trash2, Building2 } from "lucide-react";
+import { Camera, Home, MapPinned, Trash2, Building2 } from "lucide-react";
 
 type SlotKey = "exterior" | "interior" | "ctx0" | "ctx1" | "ctx2";
 
 type SlotState = {
   preview: string | null;
   fileName?: string;
+};
+
+export type VisionPhotos = {
+  exterior: string | null;
+  interior: string | null;
+  context: string[];
 };
 
 const emptySlots = (): Record<SlotKey, SlotState> => ({
@@ -27,6 +32,16 @@ function readAsDataUrl(file: File): Promise<string> {
     reader.onerror = () => reject(new Error("No se pudo leer la imagen"));
     reader.readAsDataURL(file);
   });
+}
+
+function slotsToPhotos(slots: Record<SlotKey, SlotState>): VisionPhotos {
+  return {
+    exterior: slots.exterior.preview,
+    interior: slots.interior.preview,
+    context: [slots.ctx0, slots.ctx1, slots.ctx2]
+      .map((s) => s.preview)
+      .filter((p): p is string => Boolean(p)),
+  };
 }
 
 function SlotUpload({
@@ -119,11 +134,24 @@ function SlotUpload({
   );
 }
 
-export function FacadeVisionAnalyzer() {
+/** Intake de fotos para evaluar riesgo. El análisis ocurre al generar el plan. */
+export function FacadeVisionAnalyzer({
+  onPhotosChange,
+  analysis,
+}: {
+  onPhotosChange?: (photos: VisionPhotos, ready: boolean) => void;
+  /** Resultado Vision tras generar el plan (opcional). */
+  analysis?: string | null;
+}) {
   const [slots, setSlots] = useState(emptySlots);
-  const [result, setResult] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const photos = slotsToPhotos(slots);
+    const ready = Boolean(photos.exterior && photos.interior);
+    onPhotosChange?.(photos, ready);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slots]);
 
   async function setSlot(key: SlotKey, file: File | null) {
     if (!file) return;
@@ -132,7 +160,6 @@ export function FacadeVisionAnalyzer() {
       return;
     }
     setError(null);
-    setResult(null);
     try {
       const dataUrl = await readAsDataUrl(file);
       setSlots((prev) => ({
@@ -146,60 +173,20 @@ export function FacadeVisionAnalyzer() {
 
   function clearSlot(key: SlotKey) {
     setSlots((prev) => ({ ...prev, [key]: { preview: null } }));
-    setResult(null);
   }
 
-  async function analyze() {
-    setError(null);
-    setResult(null);
-
-    if (!slots.exterior.preview) {
-      setError("Sube la foto del exterior (fachada). Es obligatoria.");
-      return;
-    }
-    if (!slots.interior.preview) {
-      setError("Sube la foto del interior. Es obligatoria.");
-      return;
-    }
-
-    const context = [slots.ctx0, slots.ctx1, slots.ctx2]
-      .map((s) => s.preview)
-      .filter((p): p is string => Boolean(p));
-
-    setLoading(true);
-    try {
-      const res = await fetch("/api/vision", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          exterior: slots.exterior.preview,
-          interior: slots.interior.preview,
-          context,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error de análisis");
-      setResult(data.analysis as string);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo analizar");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const ready = Boolean(slots.exterior.preview && slots.interior.preview);
   const contextCount = [slots.ctx0, slots.ctx1, slots.ctx2].filter(
     (s) => s.preview
   ).length;
+  const ready = Boolean(slots.exterior.preview && slots.interior.preview);
 
   return (
     <Card aria-labelledby="vision-title">
-      <CardTitle id="vision-title">Análisis visual de tu vivienda</CardTitle>
+      <CardTitle id="vision-title">Fotos de tu vivienda</CardTitle>
       <CardDescription>
-        Obligatorias: una foto del exterior y una del interior. Opcionales: hasta
-        3 del barrio, de los lados o de lo cercano (para ver si hay edificios o
-        elementos que puedan caer). Las fotos no se publican en el tablero
-        comunitario.
+        Necesarias para evaluar el riesgo visual: exterior e interior. Opcionales:
+        hasta 3 del barrio, de los lados o de lo cercano. Se analizan al generar
+        el plan. No se publican en el tablero comunitario.
       </CardDescription>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -252,38 +239,24 @@ export function FacadeVisionAnalyzer() {
         </div>
       </div>
 
-      <div className="mt-4">
-        <Button
-          type="button"
-          variant="resilience"
-          onClick={() => void analyze()}
-          disabled={!ready || loading}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Analizando…
-            </>
-          ) : (
-            <>
-              <Camera className="h-4 w-4" /> Analizar fotos
-            </>
-          )}
-        </Button>
-        {!ready && (
-          <p className="mt-2 text-xs text-[var(--color-muted)]">
-            Faltan fotos obligatorias (exterior e interior).
-          </p>
-        )}
-      </div>
+      {!ready && (
+        <p className="mt-3 text-xs text-[var(--color-muted)]">
+          Faltan fotos obligatorias (exterior e interior) para generar el plan.
+        </p>
+      )}
 
       {error && (
         <p className="mt-3 text-sm text-[var(--color-terracotta)]" role="alert">
           {error}
         </p>
       )}
-      {result && (
+
+      {analysis && (
         <div className="mt-4 rounded-md border border-[var(--color-border)] p-4 text-sm leading-relaxed whitespace-pre-wrap">
-          {result}
+          <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--color-resilience)]">
+            Lectura visual incluida en tu plan
+          </p>
+          {analysis}
         </div>
       )}
     </Card>

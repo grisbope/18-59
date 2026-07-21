@@ -7,7 +7,10 @@ import type { Building, FamilyPlan, HazardType } from "@/lib/utils";
 import { MapPicker } from "@/components/MapPicker";
 import { BuildingTwinCard } from "@/components/BuildingTwinCard";
 import { ActionPlanViewer } from "@/components/ActionPlanViewer";
-import { FacadeVisionAnalyzer } from "@/components/FacadeVisionAnalyzer";
+import {
+  FacadeVisionAnalyzer,
+  type VisionPhotos,
+} from "@/components/FacadeVisionAnalyzer";
 import { CommunityDashboard } from "@/components/CommunityDashboard";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/components/AuthProvider";
@@ -18,11 +21,11 @@ import { cn } from "@/lib/utils";
 const buildings = buildingsData as Building[];
 
 const steps = [
-  "Edificio",
-  "Gemelo",
-  "Perfil",
-  "Plan vivo",
   "Comunidad",
+  "Edificio",
+  "Hogar",
+  "Fotos",
+  "Plan de acción",
 ];
 
 export default function PlanPage() {
@@ -36,22 +39,54 @@ export default function PlanPage() {
   const [hasChildren, setHasChildren] = useState(true);
   const [hasDisability, setHasDisability] = useState(false);
   const [hazardType, setHazardType] = useState<HazardType>("sismo");
+  const [photos, setPhotos] = useState<VisionPhotos>({
+    exterior: null,
+    interior: null,
+    context: [],
+  });
+  const [photosReady, setPhotosReady] = useState(false);
   const [plan, setPlan] = useState<FamilyPlan | null>(null);
+  const [visionAnalysis, setVisionAnalysis] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [shared, setShared] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dashKey, setDashKey] = useState(0);
 
-  const canGenerate = useMemo(() => Boolean(selected), [selected]);
-  const activeStep = plan ? (shared ? 4 : 3) : selected ? 2 : 0;
+  const canGenerate = useMemo(
+    () => Boolean(selected && photosReady),
+    [selected, photosReady]
+  );
+
+  const activeStep = plan ? 4 : photosReady ? 3 : selected ? 2 : 1;
 
   async function generate() {
-    if (!selected) return;
+    if (!selected || !photos.exterior || !photos.interior) return;
     setLoading(true);
     setError(null);
     setShared(false);
+    setPlan(null);
+    setVisionAnalysis(null);
     try {
+      setLoadingStep("Analizando fotos de la vivienda…");
+      const visionRes = await fetch("/api/vision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          exterior: photos.exterior,
+          interior: photos.interior,
+          context: photos.context,
+        }),
+      });
+      const visionData = await visionRes.json();
+      if (!visionRes.ok) {
+        throw new Error(visionData.error || "Error al analizar las fotos");
+      }
+      const analysis = String(visionData.analysis || "");
+      setVisionAnalysis(analysis);
+
+      setLoadingStep("Generando plan de acción…");
       const res = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -63,6 +98,7 @@ export default function PlanPage() {
           hasChildren,
           hasDisability,
           hazardType,
+          visionAnalysis: analysis,
         }),
       });
       const data = await res.json();
@@ -77,6 +113,7 @@ export default function PlanPage() {
       setError(e instanceof Error ? e.message : "No se pudo generar el plan");
     } finally {
       setLoading(false);
+      setLoadingStep(null);
     }
   }
 
@@ -115,14 +152,14 @@ export default function PlanPage() {
     <main className="mx-auto max-w-6xl px-4 py-10">
       <header className="mb-6">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-terracotta)]">
-          Flujo del agente 18:59
+          Evaluación de riesgo familiar
         </p>
         <h1 className="mt-1 font-[family-name:var(--font-display)] text-4xl text-[var(--color-ink)]">
-          Generar mi plan
+          Datos de tu hogar → plan de acción
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">
-          Selecciona tu edificio → gemelo digital → plan vivo → comparte. El plan
-          queda cacheado offline. Tip jurado: empieza por{" "}
+          Primero reúne lo necesario para evaluar el riesgo (edificio, hogar y
+          fotos). Al final genera el plan. Tip jurado: empieza por{" "}
           <strong>Sucre 214</strong> o <strong>Olmedo 88</strong>.
         </p>
       </header>
@@ -143,11 +180,21 @@ export default function PlanPage() {
         ))}
       </ol>
 
+      <section aria-labelledby="step-community" className="mb-10">
+        <h2 id="step-community" className="mb-4 text-lg font-bold">
+          1. Estadísticas de tu comunidad
+        </h2>
+        <CommunityDashboard
+          key={dashKey}
+          highlightSectorId={selected?.sectorId ?? plan?.sectorId}
+        />
+      </section>
+
       {!user && (
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-paper)] p-4 text-sm">
           <p className="text-[var(--color-ink-soft)]">
-            Puedes generar el plan sin cuenta. Para asociarlo a tu hogar y
-            demostrar Auth ante el jurado, entra o usa la cuenta demo.
+            Puedes completar la evaluación sin cuenta. Para asociarla a tu hogar
+            ante el jurado, entra o usa la cuenta demo.
           </p>
           <Button asChild size="sm" variant="secondary">
             <Link href="/auth?next=/plan">Entrar / Demo</Link>
@@ -163,7 +210,7 @@ export default function PlanPage() {
 
       <section aria-labelledby="step-map" className="mb-10">
         <h2 id="step-map" className="mb-4 text-lg font-bold">
-          1. Selecciona tu edificio
+          2. Tu edificio
         </h2>
         <MapPicker
           buildings={buildings}
@@ -171,23 +218,20 @@ export default function PlanPage() {
           onSelect={(b) => {
             setSelected(b);
             setPlan(null);
+            setVisionAnalysis(null);
             setShared(false);
           }}
         />
+        {selected && (
+          <div className="mt-6">
+            <BuildingTwinCard building={selected} />
+          </div>
+        )}
       </section>
-
-      {selected && (
-        <section className="mb-10" aria-labelledby="step-twin">
-          <h2 id="step-twin" className="mb-4 text-lg font-bold">
-            2. Gemelo digital
-          </h2>
-          <BuildingTwinCard building={selected} />
-        </section>
-      )}
 
       <section className="mb-10" aria-labelledby="step-profile">
         <h2 id="step-profile" className="mb-4 text-lg font-bold">
-          3. Perfil familiar
+          3. Perfil del hogar
         </h2>
         <div className="grid gap-4 rounded-lg border border-[var(--color-border)] bg-white p-5 sm:grid-cols-2">
           <label className="text-sm">
@@ -256,41 +300,72 @@ export default function PlanPage() {
             </div>
           </fieldset>
         </div>
-        <div className="mt-4">
-          <Button onClick={() => void generate()} disabled={!canGenerate || loading}>
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Generando con agente…
-              </>
-            ) : (
-              "Generar plan de resiliencia"
-            )}
-          </Button>
-          {error && (
-            <p className="mt-2 text-sm text-[var(--color-terracotta)]" role="alert">
-              {error}
-            </p>
+      </section>
+
+      <section className="mb-10" aria-labelledby="step-photos">
+        <h2 id="step-photos" className="mb-4 text-lg font-bold">
+          4. Fotos para evaluar el riesgo
+        </h2>
+        <FacadeVisionAnalyzer
+          onPhotosChange={(p, ready) => {
+            setPhotos(p);
+            setPhotosReady(ready);
+          }}
+          analysis={visionAnalysis}
+        />
+      </section>
+
+      <section className="mb-10" aria-labelledby="step-generate">
+        <h2 id="step-generate" className="mb-2 text-lg font-bold">
+          5. Generar plan de acción
+        </h2>
+        <p className="mb-4 max-w-2xl text-sm text-[var(--color-muted)]">
+          Con edificio, hogar y fotos, el agente analiza el riesgo visual y arma
+          tu plan vivo (antes / durante / después).
+        </p>
+        <Button
+          onClick={() => void generate()}
+          disabled={!canGenerate || loading}
+          size="lg"
+          variant="resilience"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />{" "}
+              {loadingStep || "Generando…"}
+            </>
+          ) : (
+            "Generar / implementar plan de acción"
           )}
-        </div>
+        </Button>
+        {!canGenerate && (
+          <p className="mt-2 text-xs text-[var(--color-muted)]">
+            Completa edificio + fotos obligatorias (exterior e interior).
+          </p>
+        )}
+        {error && (
+          <p className="mt-2 text-sm text-[var(--color-terracotta)]" role="alert">
+            {error}
+          </p>
+        )}
       </section>
 
       {plan && (
-        <section className="mb-10 space-y-8" aria-labelledby="step-plan">
+        <section className="mb-10 space-y-6" aria-labelledby="step-plan">
           <h2 id="step-plan" className="text-lg font-bold">
-            4. Tu plan vivo
+            Tu plan de acción
           </h2>
           {shared && (
             <p className="flex items-center gap-2 rounded-md border border-[var(--color-resilience)] bg-[var(--color-paper)] px-3 py-2 text-sm text-[var(--color-resilience)]">
-              <Check className="h-4 w-4" aria-hidden /> Plan compartido — el tablero
-              del sector se actualizó.
+              <Check className="h-4 w-4" aria-hidden /> Plan compartido — el
+              tablero de la comunidad se actualizó arriba.
             </p>
           )}
-          <ActionPlanViewer plan={plan} onShare={() => void share()} sharing={sharing} />
-          <FacadeVisionAnalyzer />
-          <div>
-            <h3 className="mb-3 text-lg font-bold">5. Tablero comunitario</h3>
-            <CommunityDashboard key={dashKey} highlightSectorId={plan.sectorId} />
-          </div>
+          <ActionPlanViewer
+            plan={plan}
+            onShare={() => void share()}
+            sharing={sharing}
+          />
         </section>
       )}
     </main>

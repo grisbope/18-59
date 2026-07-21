@@ -22,8 +22,20 @@ export async function POST(req: Request) {
         : "sismo") as HazardType,
     };
 
-    const plan = await runResilienceAgent({ buildingId, profile });
-    return NextResponse.json({ plan, mode: process.env.OPENAI_API_KEY ? "openai" : "demo" });
+    const visionAnalysis =
+      typeof body.visionAnalysis === "string" && body.visionAnalysis.trim()
+        ? body.visionAnalysis.trim().slice(0, 4000)
+        : undefined;
+
+    const plan = await runResilienceAgent({
+      buildingId,
+      profile,
+      visionAnalysis,
+    });
+    return NextResponse.json({
+      plan,
+      mode: process.env.OPENAI_API_KEY ? "openai" : "demo",
+    });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Error generando plan" },

@@ -296,6 +296,7 @@ function buildFallbackPlan(
 export async function runResilienceAgent(input: {
   buildingId: string;
   profile: FamilyProfile;
+  visionAnalysis?: string;
 }): Promise<FamilyPlan> {
   const building = getBuilding(input.buildingId);
   if (!building) throw new Error("Edificio no encontrado");
@@ -307,6 +308,9 @@ export async function runResilienceAgent(input: {
     input.profile.hasElderly ? "adultos mayores" : "",
     input.profile.hasChildren ? "niños" : "",
     input.profile.hasDisability ? "discapacidad" : "",
+    input.visionAnalysis
+      ? "fachada interior entorno visual vulnerabilidad"
+      : "",
     "SNGR lineamientos evacuación",
   ].join(" ");
 
@@ -319,6 +323,9 @@ export async function runResilienceAgent(input: {
 
   const openai = getOpenAI()!;
   const context = chunks.map((c) => `[${c.title}]\n${c.text}`).join("\n\n---\n\n");
+  const visionBlock = input.visionAnalysis
+    ? `\nAnálisis visual de la vivienda (usar para personalizar el plan, sin alarmismo):\n${input.visionAnalysis}\n`
+    : "";
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -328,6 +335,7 @@ export async function runResilienceAgent(input: {
         role: "system",
         content: `Eres el agente 18:59 de Portoviejo. Generas planes de resiliencia familiar en español, claros y accionables.
 Siempre cita fuentes del contexto RAG. No inventes normas. No digas que sustituyes a autoridades.
+Si hay análisis visual, incorpóralo en familySummary y en acciones concretas (antes/durante/después) cuando aporte señales útiles.
 Los strings del JSON deben ser texto plano: sin markdown (nada de **, __, #, ni enlaces).
 Responde SOLO JSON con keys: familySummary, before (string[]), during (string[]), after (string[]), meetingPoint, evacuationRoute.`,
       },
@@ -335,6 +343,7 @@ Responde SOLO JSON con keys: familySummary, before (string[]), during (string[])
         role: "user",
         content: `Edificio: ${JSON.stringify(building)}
 Perfil familiar: ${JSON.stringify(input.profile)}
+${visionBlock}
 Contexto RAG (citar):
 ${context}`,
       },
