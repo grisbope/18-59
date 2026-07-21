@@ -53,6 +53,7 @@ export default function PlanPage() {
   const [loadingStep, setLoadingStep] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [shared, setShared] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dashKey, setDashKey] = useState(0);
 
@@ -68,6 +69,7 @@ export default function PlanPage() {
     setLoading(true);
     setError(null);
     setShared(false);
+    setShareUrl(null);
     setPlan(null);
     setVisionAnalysis(null);
     try {
@@ -126,6 +128,20 @@ export default function PlanPage() {
     if (!plan) return;
     setSharing(true);
     try {
+      // 1) Publicar plan compartible (enlace real)
+      const pub = await fetch("/api/shared-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const pubData = await pub.json();
+      if (!pub.ok) throw new Error(pubData.error || "No se pudo publicar el plan");
+      const url =
+        (pubData.shareUrl as string) ||
+        `${window.location.origin}/plan/v/${encodeURIComponent(plan.id)}`;
+      setShareUrl(url);
+
+      // 2) Actualizar métrica comunitaria
       await fetch("/api/community", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -137,17 +153,27 @@ export default function PlanPage() {
       });
       setShared(true);
       setDashKey((k) => k + 1);
+
+      // 3) Compartir enlace del plan (no /comunidad)
       if (navigator.share) {
         try {
           await navigator.share({
             title: "Plan 18:59",
             text: `Plan de resiliencia familiar — ${plan.buildingName}. Punto de encuentro: ${plan.meetingPoint}`,
-            url: window.location.origin + "/comunidad",
+            url,
           });
         } catch {
-          /* usuario canceló share nativo */
+          /* usuario canceló */
+        }
+      } else if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(url);
+        } catch {
+          /* ignore */
         }
       }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo compartir");
     } finally {
       setSharing(false);
     }
@@ -440,10 +466,25 @@ export default function PlanPage() {
             Tu plan de acción
           </h2>
           {shared && (
-            <p className="flex items-center gap-2 rounded-md border border-[var(--color-resilience)] bg-[var(--color-paper)] px-3 py-2 text-sm text-[var(--color-resilience)]">
-              <Check className="h-4 w-4" aria-hidden /> Plan compartido — el
-              tablero de la comunidad se actualizó arriba.
-            </p>
+            <div className="space-y-2 rounded-md border border-[var(--color-resilience)] bg-[var(--color-paper)] px-3 py-3 text-sm text-[var(--color-resilience)]">
+              <p className="flex items-center gap-2">
+                <Check className="h-4 w-4" aria-hidden /> Plan compartido — el
+                tablero de la comunidad se actualizó arriba.
+              </p>
+              {shareUrl && (
+                <p className="break-all text-[var(--color-ink-soft)]">
+                  Enlace del plan:{" "}
+                  <a
+                    href={shareUrl}
+                    className="font-semibold text-[var(--color-terracotta)] underline"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {shareUrl}
+                  </a>
+                </p>
+              )}
+            </div>
           )}
           <ActionPlanViewer
             plan={plan}

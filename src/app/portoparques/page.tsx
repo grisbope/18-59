@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { savePlanLocal } from "@/lib/offline";
 import { cn } from "@/lib/utils";
-import { Loader2, Trees } from "lucide-react";
+import { Check, Loader2, Trees } from "lucide-react";
 
 const parks = parksData as Park[];
 
@@ -38,6 +38,8 @@ export default function PortoParquesPage() {
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   const canGenerate = useMemo(
     () => Boolean(park && photosReady && eventName.trim()),
@@ -101,6 +103,41 @@ export default function PortoParquesPage() {
     } finally {
       setLoading(false);
       setLoadingStep(null);
+    }
+  }
+
+  async function share() {
+    if (!plan) return;
+    setSharing(true);
+    try {
+      const pub = await fetch("/api/shared-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const pubData = await pub.json();
+      if (!pub.ok) throw new Error(pubData.error || "No se pudo publicar");
+      const url =
+        (pubData.shareUrl as string) ||
+        `${window.location.origin}/plan/v/${encodeURIComponent(plan.id)}`;
+      setShareUrl(url);
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: "Plan PortoParques 18:59",
+            text: `Plan del evento — ${plan.buildingName}`,
+            url,
+          });
+        } catch {
+          /* cancel */
+        }
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo compartir");
+    } finally {
+      setSharing(false);
     }
   }
 
@@ -295,9 +332,27 @@ export default function PortoParquesPage() {
       </section>
 
       {plan && (
-        <section id="park-plan-result" className="mb-10">
+        <section id="park-plan-result" className="mb-10 space-y-4">
           <h2 className="mb-4 text-lg font-bold">Plan del evento</h2>
-          <ActionPlanViewer plan={plan} />
+          {shareUrl && (
+            <p className="break-all rounded-md border border-[var(--color-resilience)] bg-[var(--color-paper)] px-3 py-2 text-sm">
+              <Check className="mr-1 inline h-4 w-4 text-[var(--color-resilience)]" />
+              Enlace:{" "}
+              <a
+                href={shareUrl}
+                className="font-semibold text-[var(--color-terracotta)] underline"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {shareUrl}
+              </a>
+            </p>
+          )}
+          <ActionPlanViewer
+            plan={plan}
+            onShare={() => void share()}
+            sharing={sharing}
+          />
         </section>
       )}
     </main>
